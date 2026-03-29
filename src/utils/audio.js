@@ -178,17 +178,18 @@ export const playKiai = (beltIndex) => {
     osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, audioCtx.currentTime + 0.25);
 
-    // Formante Vocal através de Bandpass Filter simula a garganta humana
+    // Filtro Lowpass varrendo para simular a boca fechando (formante)
     const filter = audioCtx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(900 + randomDetune, audioCtx.currentTime);
-    filter.Q.value = 2.0;
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(baseFreq * 8, audioCtx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(baseFreq * 2, audioCtx.currentTime + 0.25);
+    filter.Q.value = 3.0; // Puxa um pouco a ressonância para dar som vocal
 
     // Envelope de volume (Ataque explosivo, decaimento rápido)
     const gainNode = audioCtx.createGain();
     gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
     // Ataque muito rápido de som vocal
-    gainNode.gain.linearRampToValueAtTime(1.5, audioCtx.currentTime + 0.03);
+    gainNode.gain.linearRampToValueAtTime(2.0, audioCtx.currentTime + 0.03);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
 
     osc.connect(filter);
