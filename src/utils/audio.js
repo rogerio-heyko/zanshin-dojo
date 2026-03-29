@@ -10,6 +10,114 @@ export const initAudio = () => {
     }
 };
 
+let bgOscillator = null;
+let bgGain = null;
+let isPlayingMusic = false;
+let currentBeltIndex = 0;
+let nextNoteTime = 0;
+let current16thNote = 0;
+let timerID = null;
+
+const scheduleNote = (beatNumber, time) => {
+    if (!audioCtx) return;
+
+    // Drone intensity increases slightly with belts
+    if (bgGain) {
+        const targetVol = 0.05 + (currentBeltIndex * 0.005);
+        bgGain.gain.setTargetAtTime(targetVol, time, 0.1);
+    }
+
+    // Taiko Drone (Quarter notes) - Black Belts (Index 7+)
+    if (currentBeltIndex >= 7 && beatNumber % 4 === 0) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.setValueAtTime(60, time);
+        osc.frequency.exponentialRampToValueAtTime(30, time + 0.5);
+        gain.gain.setValueAtTime(0.6, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
+        osc.start(time);
+        osc.stop(time + 0.5);
+    }
+
+    // Koto Pluck (Syncopated) - Colored Belts (Index 3+)
+    if (currentBeltIndex >= 3) {
+        // Japanese Pentatonic scale frequencies mapping (roughly)
+        const scale = [220, 246.94, 293.66, 329.63, 392.00, 440, 493.88];
+        if (beatNumber % 8 === 2 || beatNumber % 8 === 5) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.type = 'triangle';
+            // Random note from pentatonic
+            const note = scale[Math.floor(Math.random() * scale.length)];
+            osc.frequency.setValueAtTime(note, time);
+
+            gain.gain.setValueAtTime(0.15, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
+
+            osc.start(time);
+            osc.stop(time + 0.3);
+        }
+    }
+};
+
+const sequencerScheduler = () => {
+    while (nextNoteTime < audioCtx.currentTime + 0.1) {
+        scheduleNote(current16thNote, nextNoteTime);
+        // Advance note
+        const secondsPerBeat = 60.0 / 120.0; // 120 BPM
+        nextNoteTime += 0.25 * secondsPerBeat; // 16th note
+        current16thNote++;
+        if (current16thNote === 16) {
+            current16thNote = 0;
+        }
+    }
+    timerID = setTimeout(sequencerScheduler, 25);
+};
+
+export const updateAudioLayer = (beltIndex) => {
+    currentBeltIndex = beltIndex;
+};
+
+export const startBackgroundMusic = () => {
+    if (!audioCtx) initAudio();
+    if (isPlayingMusic) return;
+    isPlayingMusic = true;
+
+    // Continuous Zen Drone
+    bgOscillator = audioCtx.createOscillator();
+    bgGain = audioCtx.createGain();
+    bgOscillator.type = 'sine';
+    bgOscillator.frequency.value = 82.41; // Low E
+    bgGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    bgOscillator.connect(bgGain);
+    bgGain.connect(audioCtx.destination);
+    bgOscillator.start();
+
+    // Start Sequencer
+    nextNoteTime = audioCtx.currentTime + 0.05;
+    current16thNote = 0;
+    sequencerScheduler();
+};
+
+export const stopBackgroundMusic = () => {
+    isPlayingMusic = false;
+    clearTimeout(timerID);
+    if (bgOscillator) {
+        bgOscillator.stop();
+        bgOscillator.disconnect();
+        bgOscillator = null;
+    }
+    if (bgGain) {
+        bgGain.disconnect();
+        bgGain = null;
+    }
+};
+
 export const playTaiko = () => {
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();

@@ -9,14 +9,25 @@ const ZONES = {
     SAFE_ZONE: 5,
 };
 
-// Slower speeds and spawnRates for training progression.
-// Spawns start at 3 seconds, meaning "Metronome" like pace.
-const BELT_LEVELS = [
-    { name: 'Branca', minScore: 0, speed: 0.2, spawnRate: 3000 },
-    { name: 'Amarela', minScore: 50, speed: 0.3, spawnRate: 2500 },
-    { name: 'Verde', minScore: 150, speed: 0.5, spawnRate: 2000 },
-    { name: 'Marrom', minScore: 350, speed: 0.8, spawnRate: 1500 },
-    { name: 'Preta', minScore: 700, speed: 1.2, spawnRate: 1000 },
+// 17-Stage Progression roadmap with wisdom quotes and scaling speed.
+export const BELT_LEVELS = [
+    { name: 'Branca', minScore: 0, speed: 0.2, quote: "Caminhe suavemente, respire fundo." },
+    { name: 'Amarela', minScore: 50, speed: 0.25, quote: "A luz do sol desperta a determinação." },
+    { name: 'Vermelha', minScore: 150, speed: 0.3, quote: "O fogo forja a persistência." },
+    { name: 'Laranja', minScore: 300, speed: 0.35, quote: "O amanhecer revela o guerreiro paciente." },
+    { name: 'Verde', minScore: 500, speed: 0.4, quote: "Crescer exige raízes fortes." },
+    { name: 'Roxa', minScore: 750, speed: 0.5, quote: "A intuição guia a percepção." },
+    { name: 'Marrom', minScore: 1000, speed: 0.6, quote: "A terra firme sustenta o espírito." },
+    { name: 'Preta - 1º Dan', minScore: 1300, speed: 0.7, quote: "O vazio inicial, uma nova jornada começa." },
+    { name: 'Preta - 2º Dan', minScore: 1700, speed: 0.8, quote: "A técnica se dissolve, resta o instinto." },
+    { name: 'Preta - 3º Dan', minScore: 2200, speed: 0.9, quote: "A espada não corta a si mesma." },
+    { name: 'Preta - 4º Dan', minScore: 2800, speed: 1.0, quote: "Quatro ventos não abalam a montanha." },
+    { name: 'Preta - 5º Dan', minScore: 3500, speed: 1.1, quote: "Flua como a água, adapte-se." },
+    { name: 'Preta - 6º Dan', minScore: 4300, speed: 1.2, quote: "Harmonia interior é invulnerabilidade." },
+    { name: 'Preta - 7º Dan', minScore: 5200, speed: 1.3, quote: "O verdadeiro poder não levanta poeira." },
+    { name: 'Preta - 8º Dan', minScore: 6200, speed: 1.4, quote: "Sem forma, sem limites." },
+    { name: 'Preta - 9º Dan', minScore: 7300, speed: 1.5, quote: "Apenas um com o todo." },
+    { name: 'Preta - 10º Dan', minScore: 8500, speed: 1.6, quote: "Mushin: A mente sem mente." }
 ];
 
 export const useStore = create(
@@ -49,10 +60,38 @@ export const useStore = create(
 
             // --- AÇÕES DO JOGO ---
             spawnEnemy: () => {
-                const { gameMode, belt } = get();
+                const { gameMode, belt, enemies } = get();
                 if (gameMode !== 'PLAYING') return; // Pause and transitions stop spawns
 
                 const currentBeltConfig = BELT_LEVELS.find(b => b.name === belt);
+                const beltIndex = BELT_LEVELS.findIndex(b => b.name === belt);
+
+                // Boss Combo Boss Burst Mode (Index 7+ / Faixas Pretas)
+                if (beltIndex >= 7) {
+                    if (enemies.length === 0) {
+                        const minCombos = 2;
+                        const maxCombos = 3 + (beltIndex - 7); // Increases by 1 each Dan
+                        const comboLength = Math.floor(Math.random() * (maxCombos - minCombos + 1)) + minCombos;
+
+                        const newEnemies = [];
+                        let lastSide = Math.random() > 0.5 ? 'left' : 'right';
+                        for (let i = 0; i < comboLength; i++) {
+                            if (Math.random() > 0.4) lastSide = lastSide === 'left' ? 'right' : 'left';
+                            newEnemies.push({
+                                id: Date.now() + i,
+                                side: lastSide,
+                                // Espaçamento apertado para combates rítmicos relâmpago
+                                position: lastSide === 'left' ? -(i * 15) : 100 + (i * 15),
+                                speed: currentBeltConfig.speed + 0.3,
+                                type: 'shadow', // They act exactly like normal shadows for impact checking
+                            });
+                        }
+                        set({ enemies: newEnemies });
+                    }
+                    return;
+                }
+
+                // Normal Spawning (Faixa Branca a Marrom)
                 const side = Math.random() > 0.5 ? 'left' : 'right';
                 const newEnemy = {
                     id: Date.now() + Math.random(),
