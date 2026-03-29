@@ -163,41 +163,22 @@ export const playImpact = (type) => {
     osc.stop(audioCtx.currentTime + 0.2);
 };
 
+const kiaiAudio = new Audio('/kiai.mp3');
+kiaiAudio.volume = 0.9;
+
 export const playKiai = (beltIndex) => {
     if (!audioCtx) return;
 
-    // Variação de grito (mais grave para faixas pretas)
-    const randomDetune = (Math.random() - 0.5) * 40;
-    const baseFreq = (beltIndex >= 7 ? 130 : 220) + randomDetune;
+    // Clona o nó de áudio para permitir sobreposição de múltiplos gritos rápidos
+    const clone = kiaiAudio.cloneNode();
 
-    // As cordas vocais (sawtooth é rico em harmônicos)
-    const osc = audioCtx.createOscillator();
-    osc.type = 'sawtooth';
+    // Altera sutilmente o pitch: faixas pretas tem gritos mais lentos/graves
+    const detune = (Math.random() * 0.15) - 0.05;
+    clone.playbackRate = (beltIndex >= 7 ? 0.85 : 1.05) + detune;
 
-    // O pitch cai rapidamente gerando a percussão vocal "KYAAA"
-    osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, audioCtx.currentTime + 0.25);
-
-    // Filtro Lowpass varrendo para simular a boca fechando (formante)
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(baseFreq * 8, audioCtx.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(baseFreq * 2, audioCtx.currentTime + 0.25);
-    filter.Q.value = 3.0; // Puxa um pouco a ressonância para dar som vocal
-
-    // Envelope de volume (Ataque explosivo, decaimento rápido)
-    const gainNode = audioCtx.createGain();
-    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-    // Ataque muito rápido de som vocal
-    gainNode.gain.linearRampToValueAtTime(2.0, audioCtx.currentTime + 0.03);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-
-    osc.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.25);
+    clone.play().catch(() => {
+        // Ignora erros caso kiai.mp3 não exista ou o navegador bloqueie autoplay
+    });
 };
 
 export const playMiss = () => {
