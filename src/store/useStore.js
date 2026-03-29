@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { playImpact, playMiss, playLevelUp, playDamage } from '../utils/audio';
+import { playImpact, playMiss, playLevelUp, playDamage, playKiai } from '../utils/audio';
 
 const ZONES = {
     PERFECT_MIN: 42, PERFECT_MAX: 48, // Lado Esquerdo (0 a 100)
@@ -154,6 +154,7 @@ export const useStore = create(
                     const expected = bossSequence[playerSequenceIndex];
                     if (side === expected) {
                         playImpact('PERFECT');
+                        playKiai(beltIndex);
                         addComboEffect(side, true);
                         const nextIndex = playerSequenceIndex + 1;
                         const newScore = score + 50;
@@ -219,6 +220,7 @@ export const useStore = create(
 
                 if (isPerfect || isHit) {
                     playImpact(isPerfect ? 'PERFECT' : 'NORMAL');
+                    playKiai(beltIndex);
                     const points = isPerfect ? 20 : 10;
                     const newScore = score + points;
                     const newCombo = combo + 1;

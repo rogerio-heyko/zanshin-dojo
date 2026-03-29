@@ -163,6 +163,42 @@ export const playImpact = (type) => {
     osc.stop(audioCtx.currentTime + 0.2);
 };
 
+export const playKiai = (beltIndex) => {
+    if (!audioCtx) return;
+
+    // Variação de grito (mais grave para faixas pretas)
+    const randomDetune = (Math.random() - 0.5) * 40;
+    const baseFreq = (beltIndex >= 7 ? 130 : 220) + randomDetune;
+
+    // As cordas vocais (sawtooth é rico em harmônicos)
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sawtooth';
+
+    // O pitch cai rapidamente gerando a percussão vocal "KYAAA"
+    osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, audioCtx.currentTime + 0.25);
+
+    // Formante Vocal através de Bandpass Filter simula a garganta humana
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(900 + randomDetune, audioCtx.currentTime);
+    filter.Q.value = 2.0;
+
+    // Envelope de volume (Ataque explosivo, decaimento rápido)
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+    // Ataque muito rápido de som vocal
+    gainNode.gain.linearRampToValueAtTime(1.5, audioCtx.currentTime + 0.03);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.25);
+};
+
 export const playMiss = () => {
     if (!audioCtx) return;
     const bufferSize = audioCtx.sampleRate * 0.2; // 0.2s
