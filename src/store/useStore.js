@@ -42,6 +42,9 @@ export const useStore = create(
             comboEffects: [],
             playerState: 'IDLE',
             belt: 'Branca',
+            bossState: 'IDLE', // IDLE, DEMONSTRATING, WAITING_PLAYER, SUCCESS, FAIL
+            bossSequence: [],
+            playerSequenceIndex: 0,
 
             // --- DADOS PERSISTENTES ---
             highScore: 0,
@@ -51,12 +54,15 @@ export const useStore = create(
             startGame: () => set({
                 gameMode: 'PLAYING',
                 score: 0, health: 100, combo: 0, enemies: [], comboEffects: [],
-                playerState: 'IDLE', belt: 'Branca'
+                playerState: 'IDLE', belt: 'Branca',
+                bossState: 'IDLE', bossSequence: [], playerSequenceIndex: 0
             }),
 
             pauseGame: () => set((state) => ({
                 gameMode: state.gameMode === 'PLAYING' ? 'PAUSED' : 'PLAYING'
             })),
+
+            setBossState: (state) => set({ bossState: state }),
 
             // --- AÇÕES DO JOGO ---
             spawnEnemy: () => {
@@ -66,27 +72,20 @@ export const useStore = create(
                 const currentBeltConfig = BELT_LEVELS.find(b => b.name === belt);
                 const beltIndex = BELT_LEVELS.findIndex(b => b.name === belt);
 
-                // Boss Combo Boss Burst Mode (Index 7+ / Faixas Pretas)
+                // Boss Combo Boss Burst Mode (Index 7+ / Faixas Pretas) mudou para Simon-Says!
                 if (beltIndex >= 7) {
-                    if (enemies.length === 0) {
-                        const minCombos = 2;
-                        const maxCombos = 3 + (beltIndex - 7); // Increases by 1 each Dan
-                        const comboLength = Math.floor(Math.random() * (maxCombos - minCombos + 1)) + minCombos;
+                    const status = get().bossState;
+                    if (status === 'IDLE') {
+                        const minLength = 3;
+                        const maxLength = 3 + Math.floor((beltIndex - 7) / 2); // 3-4 for 1st Dan, up to ~8 elements at 10th
+                        const comboLength = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
 
-                        const newEnemies = [];
-                        let lastSide = Math.random() > 0.5 ? 'left' : 'right';
+                        const newSequence = [];
                         for (let i = 0; i < comboLength; i++) {
-                            if (Math.random() > 0.4) lastSide = lastSide === 'left' ? 'right' : 'left';
-                            newEnemies.push({
-                                id: Date.now() + i,
-                                side: lastSide,
-                                // Espaçamento apertado para combates rítmicos relâmpago
-                                position: lastSide === 'left' ? -(i * 15) : 100 + (i * 15),
-                                speed: currentBeltConfig.speed + 0.3,
-                                type: 'shadow', // They act exactly like normal shadows for impact checking
-                            });
+                            newSequence.push(Math.random() > 0.5 ? 'left' : 'right');
                         }
-                        set({ enemies: newEnemies });
+                        // Stop normal enemies and trigger Demonstração
+                        set({ enemies: [], bossState: 'DEMONSTRATING', bossSequence: newSequence, playerSequenceIndex: 0 });
                     }
                     return;
                 }
@@ -141,9 +140,52 @@ export const useStore = create(
             },
 
             handleAttack: (side) => {
-                const { enemies, combo, score, gameMode, playerState, addComboEffect, belt } = get();
+                const { enemies, combo, score, gameMode, playerState, addComboEffect, belt, health, takeDamage } = get();
                 if (gameMode !== 'PLAYING' || playerState === 'MISS') return;
 
+                const beltIndex = BELT_LEVELS.findIndex(b => b.name === belt);
+
+                // MODO BOSS SIMON-SAYS
+                if (beltIndex >= 7) {
+                    const { bossState, bossSequence, playerSequenceIndex } = get();
+                    if (bossState !== 'WAITING_PLAYER') return;
+
+                    const expected = bossSequence[playerSequenceIndex];
+                    if (side === expected) {
+                        playImpact('PERFECT');
+                        addComboEffect(side, true);
+                        const nextIndex = playerSequenceIndex + 1;
+                        const newScore = score + 50;
+                        set({ playerSequenceIndex: nextIndex, combo: combo + 1, score: newScore, playerState: side === 'left' ? 'ATTACK_L_PERFECT' : 'ATTACK_R_PERFECT' });
+                        setTimeout(() => set({ playerState: 'IDLE' }), 300);
+
+                        // Check if completed
+                        if (nextIndex >= bossSequence.length) {
+                            setTimeout(() => {
+                                set({ bossState: 'SUCCESS', score: newScore + 500 });
+
+                                const futureBelt = [...BELT_LEVELS].reverse().find(b => (newScore + 500) >= b.minScore).name;
+                                if (futureBelt !== belt) {
+                                    set({ belt: futureBelt, gameMode: 'TRANSITION', bossState: 'IDLE' });
+                                    playLevelUp();
+                                    setTimeout(() => set({ gameMode: 'PLAYING' }), 4000);
+                                } else {
+                                    setTimeout(() => set({ bossState: 'IDLE' }), 1500); // Trigger next sequence
+                                }
+                            }, 500);
+                        }
+                    } else {
+                        // Wrong input!
+                        playMiss();
+                        playDamage();
+                        takeDamage();
+                        set({ bossState: 'FAIL', playerSequenceIndex: 0, combo: 0 });
+                        setTimeout(() => set({ bossState: 'IDLE' }), 2000); // retry
+                    }
+                    return;
+                }
+
+                // MODO NORMAL DE SOBREVIVÊNCIA
                 const potentialTargets = enemies.filter(e => e.side === side);
                 const closest = potentialTargets.sort((a, b) =>
                     side === 'left' ? b.position - a.position : a.position - b.position
