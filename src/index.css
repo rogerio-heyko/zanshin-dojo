@@ -128,6 +128,8 @@ body {
     align-items: flex-end;
     justify-content: center;
     overflow: hidden;
+    margin-top: 15vh;
+    /* Empurra a linha de combate para baixo, para a madeira */
 }
 
 .stage-container::after {
@@ -153,8 +155,8 @@ body {
     bottom: 0px;
     left: 50%;
     transform: translateX(-50%);
-    width: 170px;
-    height: 170px;
+    width: 200px;
+    height: 200px;
     background-color: transparent;
     transition: transform 0.05s ease;
     z-index: 10;
