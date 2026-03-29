@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
 
 const Boss = () => {
-    const { bossState, bossSequence, playerSequenceIndex, setBossState } = useStore();
+    const { bossState, bossSequence, playerSequenceIndex, setBossState, bossChances } = useStore();
     const [activeFlash, setActiveFlash] = useState(null);
 
     useEffect(() => {
@@ -42,11 +42,14 @@ const Boss = () => {
 
             {(bossState === 'WAITING_PLAYER' || bossState === 'SUCCESS' || bossState === 'FAIL') && (
                 <div className="boss-sequence-ui">
+                    <div className="boss-chances">Chances: {bossChances}</div>
                     {bossSequence.map((step, idx) => (
                         <div
                             key={idx}
                             className={`sequence-orb ${step} ${idx < playerSequenceIndex ? 'filled' : ''} ${bossState === 'FAIL' ? 'fail-orb' : ''}`}
-                        />
+                        >
+                            {step === 'left' ? '←' : '→'}
+                        </div>
                     ))}
                 </div>
             )}

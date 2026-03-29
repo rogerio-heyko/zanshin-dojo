@@ -45,6 +45,7 @@ export const useStore = create(
             bossState: 'IDLE', // IDLE, DEMONSTRATING, WAITING_PLAYER, SUCCESS, FAIL
             bossSequence: [],
             playerSequenceIndex: 0,
+            bossChances: 3,
 
             // --- DADOS PERSISTENTES ---
             highScore: 0,
@@ -55,7 +56,7 @@ export const useStore = create(
                 gameMode: 'PLAYING',
                 score: 0, health: 100, combo: 0, enemies: [], comboEffects: [],
                 playerState: 'IDLE', belt: 'Branca',
-                bossState: 'IDLE', bossSequence: [], playerSequenceIndex: 0
+                bossState: 'IDLE', bossSequence: [], playerSequenceIndex: 0, bossChances: 3
             }),
 
             pauseGame: () => set((state) => ({
@@ -147,7 +148,7 @@ export const useStore = create(
 
                 // MODO BOSS SIMON-SAYS
                 if (beltIndex >= 7) {
-                    const { bossState, bossSequence, playerSequenceIndex } = get();
+                    const { bossState, bossSequence, playerSequenceIndex, bossChances } = get();
                     if (bossState !== 'WAITING_PLAYER') return;
 
                     const expected = bossSequence[playerSequenceIndex];
@@ -162,7 +163,7 @@ export const useStore = create(
                         // Check if completed
                         if (nextIndex >= bossSequence.length) {
                             setTimeout(() => {
-                                set({ bossState: 'SUCCESS', score: newScore + 500 });
+                                set({ bossState: 'SUCCESS', score: newScore + 500, bossChances: 3 });
 
                                 const futureBelt = [...BELT_LEVELS].reverse().find(b => (newScore + 500) >= b.minScore).name;
                                 if (futureBelt !== belt) {
@@ -177,10 +178,18 @@ export const useStore = create(
                     } else {
                         // Wrong input!
                         playMiss();
-                        playDamage();
-                        takeDamage();
-                        set({ bossState: 'FAIL', playerSequenceIndex: 0, combo: 0 });
-                        setTimeout(() => set({ bossState: 'IDLE' }), 2000); // retry
+                        const newChances = bossChances - 1;
+
+                        if (newChances <= 0) {
+                            playDamage();
+                            takeDamage();
+                            set({ bossState: 'FAIL', playerSequenceIndex: 0, combo: 0, bossChances: 3 });
+                            setTimeout(() => set({ bossState: 'IDLE' }), 2000); // retry
+                        } else {
+                            // Perdeu 1 chance, tenta novamente
+                            set({ bossState: 'FAIL', playerSequenceIndex: 0, combo: 0, bossChances: newChances });
+                            setTimeout(() => set({ bossState: 'IDLE' }), 1000); // new sequence
+                        }
                     }
                     return;
                 }
