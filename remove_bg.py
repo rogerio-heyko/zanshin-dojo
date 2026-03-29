@@ -1,44 +1,35 @@
-from PIL import Image, ImageDraw
+from PIL import Image
 import sys
 
-def flood_fill_transparent(input_path, output_path, tolerance=30):
+def flood_fill_transparent(input_path, output_path):
     try:
         img = Image.open(input_path).convert("RGBA")
         width, height = img.size
+        pixels = img.load()
         
-        # We will do a flood fill from the 4 corners.
-        # ImageDraw.floodfill actually fills with a color.
-        # We will fill the background with a magical transparent color (0,0,0,0).
+        # Start from slightly inside to avoid 1px borders
+        queue = [(5, 5), (width-5, 5), (5, height-5), (width-5, height-5)]
         
-        target_color = img.getpixel((0, 0))
-        # If the corner is roughly white
-        if target_color[0] > 200 and target_color[1] > 200 and target_color[2] > 200:
-            # We use a custom flood fill that tolerates antialiasing
-            # Alternatively, PIL's floodfill doesn't support tolerance easily in older versions,
-            # but we can do a simple BFS.
+        visited = set()
+        
+        while queue:
+            x, y = queue.pop(0)
+            if (x, y) in visited:
+                continue
+            if x < 0 or x >= width or y < 0 or y >= height:
+                continue
             
-            pixels = img.load()
-            visited = set()
-            queue = [(0,0), (width-1, 0), (0, height-1), (width-1, height-1)]
+            visited.add((x, y))
+            p = pixels[x, y]
             
-            while queue:
-                x, y = queue.pop(0)
-                if (x, y) in visited:
-                    continue
-                if x < 0 or x >= width or y < 0 or y >= height:
-                    continue
+            # Check if it's close to white
+            if p[0] > 240 and p[1] > 240 and p[2] > 240 and p[3] > 0:
+                pixels[x, y] = (255, 255, 255, 0) # Make transparent
+                queue.append((x+1, y))
+                queue.append((x-1, y))
+                queue.append((x, y+1))
+                queue.append((x, y-1))
                 
-                visited.add((x, y))
-                p = pixels[x, y]
-                
-                # Check if it's close to white
-                if p[0] > 240 and p[1] > 240 and p[2] > 240 and p[3] > 0:
-                    pixels[x, y] = (255, 255, 255, 0) # Make transparent
-                    queue.append((x+1, y))
-                    queue.append((x-1, y))
-                    queue.append((x, y+1))
-                    queue.append((x, y-1))
-                    
         img.save(output_path, "PNG")
         print(f"Successfully processed {input_path}")
     except Exception as e:
