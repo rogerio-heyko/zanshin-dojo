@@ -16,14 +16,18 @@ const Player = () => {
         }
     };
 
-    let imageSrc = '/player_idle.png';
-    if (playerState === 'ATTACK_L_PERFECT') {
-        imageSrc = '/player_punch.png';
-    } else if (playerState === 'ATTACK_R_PERFECT') {
-        imageSrc = '/player_kick.png';
-    }
-
     const belt = useStore((state) => state.belt);
+
+    let idleImg = belt.includes('Preta') ? '/player_idle.png' : '/player_idle_white.png';
+    let punchImg = belt.includes('Preta') ? '/player_punch.png' : '/player_punch_white.png';
+    let kickImg = belt.includes('Preta') ? '/player_kick.png' : '/player_kick_white.png';
+
+    let imageSrc = idleImg;
+    if (playerState === 'ATTACK_L_PERFECT') {
+        imageSrc = punchImg;
+    } else if (playerState === 'ATTACK_R_PERFECT') {
+        imageSrc = kickImg;
+    }
 
     const getAuraColor = (beltName) => {
         if (beltName === 'Branca') return 'rgba(255, 255, 255, 0.4)';
