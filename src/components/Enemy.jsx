@@ -14,7 +14,7 @@ const Enemy = ({ data }) => {
                 src="/enemy.png"
                 alt="Enemy Shadow"
                 className="enemy-sprite"
-                style={{ transform: data.side === 'left' ? 'scaleX(-1)' : 'scaleX(1)' }}
+                style={{ transform: data.side === 'right' ? 'scaleX(-1)' : 'scaleX(1)' }}
             />
         </motion.div>
     );
