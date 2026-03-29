@@ -4,6 +4,7 @@ import { useStore, BELT_LEVELS } from '../store/useStore';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useInput } from '../hooks/useInput';
 import { initAudio, startBackgroundMusic, stopBackgroundMusic, updateAudioLayer } from '../utils/audio';
+import confetti from 'canvas-confetti';
 
 import Player from './Player';
 import Enemy from './Enemy';
@@ -33,12 +34,53 @@ const Stage = () => {
         return 'sky-base';
     };
 
+    const getBeltHex = (beltName) => {
+        if (beltName === 'Branca') return '#FFFFFF';
+        if (beltName === 'Amarela') return '#FFD700';
+        if (beltName === 'Vermelha') return '#FF0000';
+        if (beltName === 'Laranja') return '#FF8C00';
+        if (beltName === 'Verde') return '#008000';
+        if (beltName === 'Roxa') return '#800080';
+        if (beltName === 'Marrom') return '#8B4513';
+        return '#111111'; // Preta
+    };
+
+    const triggerFireworks = (beltName) => {
+        const color = getBeltHex(beltName);
+        const duration = 2500;
+        const end = Date.now() + duration;
+
+        (function frame() {
+            confetti({
+                particleCount: 8,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: [color, '#ffffff', '#FFD700']
+            });
+            confetti({
+                particleCount: 8,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: [color, '#ffffff', '#FFD700']
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
+    };
+
     useEffect(() => {
         const index = BELT_LEVELS.findIndex(b => b.name === belt);
         updateAudioLayer(index !== -1 ? index : 0);
 
-        if (gameMode === 'PLAYING' || gameMode === 'TRANSITION') {
+        if (gameMode === 'PLAYING') {
             startBackgroundMusic();
+        } else if (gameMode === 'TRANSITION') {
+            startBackgroundMusic();
+            triggerFireworks(belt);
         } else if (gameMode === 'GAMEOVER' || gameMode === 'MENU' || gameMode === 'PAUSED') {
             stopBackgroundMusic();
         }

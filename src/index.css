@@ -189,13 +189,34 @@ body {
 }
 
 .player-strike-left .player-sprite {
-    transform: scaleX(-1) translateX(40px) scale(1.1);
-    /* The punch faces right, we flip it horizontally and translate left */
+    transform: translateX(-40px) scale(1.0);
+    /* O soco original estava invertido acidentalmente, agora aponta para a esquerda */
 }
 
 .player-strike-right .player-sprite {
-    transform: translateX(40px) scale(1.1);
-    /* The kick faces right natively */
+    transform: translateX(40px) scale(1.0);
+    /* O chute voador mantem a escala nativa */
+}
+
+/* Belt visual HUD over player head */
+.belt-indicator {
+    position: absolute;
+    top: -20px;
+    width: 60px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    border-radius: 4px;
+    z-index: 20;
+}
+
+.dan-stripe {
+    width: 2px;
+    height: 100%;
+    background-color: white;
 }
 
 .player-vulnerable .player-container {
