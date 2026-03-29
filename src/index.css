@@ -189,11 +189,13 @@ body {
 }
 
 .player-strike-left .player-sprite {
-    transform: scaleX(-1) translateX(60px) scale(1.2) rotate(-10deg);
+    transform: scaleX(-1) translateX(40px) scale(1.1);
+    /* The punch faces right, we flip it horizontally and translate left */
 }
 
 .player-strike-right .player-sprite {
-    transform: translateX(60px) scale(1.2) rotate(10deg);
+    transform: translateX(40px) scale(1.1);
+    /* The kick faces right natively */
 }
 
 .player-vulnerable .player-container {
