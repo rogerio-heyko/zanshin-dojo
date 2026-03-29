@@ -497,7 +497,11 @@ body {
     opacity: 0.8;
     pointer-events: none;
 }
+
 .face-left {
+    transform: scaleX(-1) !important;
 }
+
 .face-right {
+    transform: scaleX(1) !important;
 }
