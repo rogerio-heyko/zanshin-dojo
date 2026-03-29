@@ -1,0 +1,341 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: 'JetBrains Mono', monospace;
+    background-color: #000;
+    color: #F5F5F1;
+    overflow: hidden;
+    user-select: none;
+}
+
+.app-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 1. O Céu Dinâmico */
+.stage-wrapper {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-image: url('/background.png');
+    background-size: cover;
+    background-position: center;
+    background-blend-mode: multiply;
+    transition: background-color 2s ease;
+}
+
+.sky-base {
+    background-color: #F5F5F1;
+}
+
+.sky-dusk {
+    background-color: #e0d7c6;
+}
+
+.sky-mushin {
+    background-color: #1A1A1B;
+}
+
+/* HUD */
+.hud-container {
+    position: absolute;
+    top: 50px;
+    width: 100%;
+    max-width: 600px;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    z-index: 80;
+}
+
+.current-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    color: #1A1A1B;
+}
+
+.sky-mushin .current-stats {
+    color: #F5F5F1;
+    /* Inverse color for readability */
+}
+
+.health-bar-container {
+    width: 100px;
+    height: 10px;
+    background-color: #757575;
+    margin-top: 5px;
+}
+
+.health-bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.combo-display {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #D4AF37;
+}
+
+/* Combos flotuantes */
+.combo-text {
+    position: absolute;
+    font-weight: bold;
+    pointer-events: none;
+    font-family: 'Dela Gothic One', sans-serif;
+    z-index: 70;
+}
+
+.combo-text.perfect {
+    color: #D4AF37;
+    text-shadow: 0 0 10px #D4AF37;
+}
+
+.combo-text.normal {
+    color: #1A1A1B;
+    text-shadow: 0 0 5px #F5F5F1;
+}
+
+.sky-mushin .combo-text.normal {
+    color: #F5F5F1;
+    text-shadow: 0 0 5px #1A1A1B;
+}
+
+
+/* Arena de Combate */
+.stage-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.stage-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 200%;
+    height: 2px;
+    background: #1A1A1B;
+    opacity: 0.3;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.sky-mushin .stage-container::after {
+    background: #F5F5F1;
+    opacity: 0.5;
+}
+
+
+/* Jogador */
+.player-container {
+    position: absolute;
+    bottom: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 170px;
+    height: 170px;
+    background-color: transparent;
+    transition: transform 0.05s ease;
+    z-index: 10;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.player-sprite {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.player-idle .player-sprite {
+    animation: breathe 2s infinite ease-in-out;
+}
+
+@keyframes breathe {
+    0% {
+        transform: scaleY(1);
+    }
+
+    50% {
+        transform: scaleY(1.02) translateY(-2px);
+    }
+
+    100% {
+        transform: scaleY(1);
+    }
+}
+
+.player-strike-left .player-sprite {
+    transform: scaleX(-1) translateX(60px) scale(1.2) rotate(-10deg);
+}
+
+.player-strike-right .player-sprite {
+    transform: translateX(60px) scale(1.2) rotate(10deg);
+}
+
+.player-vulnerable .player-container {
+    opacity: 0.5;
+    filter: grayscale(1);
+}
+
+.player-damaged .player-container {
+    opacity: 0.5;
+    filter: sepia(1) hue-rotate(-50deg) saturate(5);
+    /* Red damage tint */
+    animation: shake 0.2s infinite;
+}
+
+/* Inimigos */
+.enemy-shadow {
+    position: absolute;
+    bottom: 0px;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 120px;
+    background-color: transparent;
+    z-index: 5;
+}
+
+.enemy-sprite {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    animation: run-bob 0.3s infinite alternate ease-in-out;
+}
+
+@keyframes run-bob {
+    0% {
+        transform: translateY(0) rotate(3deg);
+    }
+
+    100% {
+        transform: translateY(-8px) rotate(-3deg);
+    }
+}
+
+/* Impact Zone (Enso circle) */
+.impact-zone-visual {
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    height: 45px;
+    border: 3px solid rgba(26, 26, 27, 0.1);
+    border-radius: 50%;
+    border-right-color: transparent;
+    border-top-color: rgba(183, 28, 28, 0.4);
+    animation: pulse-impact 2s infinite;
+}
+
+.sky-mushin .impact-zone-visual {
+    border: 3px solid rgba(245, 245, 241, 0.2);
+    border-right-color: transparent;
+    border-top-color: rgba(183, 28, 28, 0.8);
+}
+
+@keyframes pulse-impact {
+    0% {
+        transform: translateX(-50%) scale(1);
+        opacity: 0.3;
+    }
+
+    50% {
+        transform: translateX(-50%) scale(1.05);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translateX(-50%) scale(1);
+        opacity: 0.3;
+    }
+}
+
+/* Screen Shake / Take Damage */
+.screen-shake {
+    animation: shake 0.2s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+@keyframes shake {
+
+    10%,
+    90% {
+        transform: translate3d(-2px, 0, 0);
+    }
+
+    20%,
+    80% {
+        transform: translate3d(4px, 0, 0);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translate3d(-8px, 0, 0);
+    }
+
+    40%,
+    60% {
+        transform: translate3d(8px, 0, 0);
+    }
+}
+
+/* Touch controls */
+.touch-interface {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    z-index: 50;
+}
+
+.touch-btn {
+    flex: 1;
+    height: 100%;
+}
+
+.touch-btn:active {
+    background: rgba(183, 28, 28, 0.05);
+    /* Slight flash of red when tapped */
+}
+
+/* Borders/Moldura */
+.ink-frame-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
+    border: 20px solid transparent;
+    z-index: 60;
+}
+
+.start-prompt {
+    position: absolute;
+    top: 40%;
+    color: #757575;
+    font-family: 'Shippori Mincho', serif;
+    opacity: 0.8;
+    pointer-events: none;
+}
