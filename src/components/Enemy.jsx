@@ -13,8 +13,7 @@ const Enemy = ({ data }) => {
             <img
                 src="/enemy.png"
                 alt="Enemy Shadow"
-                className="enemy-sprite"
-                style={{ transform: data.side === 'right' ? 'scaleX(-1)' : 'scaleX(1)' }}
+                className={`enemy-sprite ${data.side === 'right' ? 'face-left' : 'face-right'}`}
             />
         </motion.div>
     );
