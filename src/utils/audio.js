@@ -176,40 +176,34 @@ export const playImpact = (type) => {
     osc.stop(audioCtx.currentTime + 0.2);
 };
 
-// Tenta pré-carregar imediatamente o asset real
-const preloadKiai = async () => {
-    try {
-        const response = await fetch('/kiai.mp3');
-        const arrayBuffer = await response.arrayBuffer();
+export const initAudio = async () => {
+    if (!audioCtx) {
+        audioCtx = new AudioContext();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
 
-        // Se audioCtx já existe, decodifica, senão armazena arrayBuffer provisório
-        if (audioCtx) {
-            kiaiBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-        } else {
-            // Em fallback, decodifica no initAudio()
-            window.__kiaiArrayBuffer = arrayBuffer;
+    // Carrega o Kiai SOMENTE após o gesto do usuário ter desbloqueado o contexto de áudio
+    if (!kiaiBuffer) {
+        try {
+            const cacheBuster = Date.now();
+            const response = await fetch('/kiai.mp3?v=' + cacheBuster);
+            if (response.ok) {
+                const arrayBuffer = await response.arrayBuffer();
+                kiaiBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                console.log('Kiai AudioBuffer carregado com sucesso!');
+            } else {
+                console.warn('kiai.mp3 retornou status da rede falso:', response.status);
+            }
+        } catch (err) {
+            console.warn('Erro fatal processando kiai.mp3:', err);
         }
-    } catch (err) {
-        console.warn('kiai.mp3 asset não carregado ou não encontrado.');
     }
 };
-preloadKiai();
 
 export const playKiai = (beltIndex) => {
-    if (!audioCtx) return;
-
-    if (!kiaiBuffer && window.__kiaiArrayBuffer) {
-        audioCtx.decodeAudioData(window.__kiaiArrayBuffer)
-            .then(buf => {
-                kiaiBuffer = buf;
-                window.__kiaiArrayBuffer = null;
-                playKiai(beltIndex);
-            })
-            .catch(() => { });
-        return;
-    }
-
-    if (!kiaiBuffer) return;
+    if (!audioCtx || !kiaiBuffer) return;
 
     const source = audioCtx.createBufferSource();
     source.buffer = kiaiBuffer;
