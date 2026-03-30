@@ -3,25 +3,7 @@ let audioCtx;
 
 let kiaiBuffer = null;
 
-export const initAudio = async () => {
-    if (!audioCtx) {
-        audioCtx = new AudioContext();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
 
-    // Pré-carrega o grito do usuário apenas uma vez no background
-    if (!kiaiBuffer) {
-        try {
-            const response = await fetch('/kiai.mp3');
-            const arrayBuffer = await response.arrayBuffer();
-            kiaiBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-        } catch (err) {
-            console.warn('kiai.mp3 asset não carregado ou não encontrado.');
-        }
-    }
-};
 
 let bgOscillator = null;
 let bgGain = null;
