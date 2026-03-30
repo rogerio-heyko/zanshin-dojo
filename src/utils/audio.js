@@ -1,12 +1,25 @@
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx;
 
-export const initAudio = () => {
+let kiaiBuffer = null;
+
+export const initAudio = async () => {
     if (!audioCtx) {
         audioCtx = new AudioContext();
     }
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
+    }
+
+    // Pré-carrega o grito do usuário apenas uma vez no background
+    if (!kiaiBuffer) {
+        try {
+            const response = await fetch('/kiai.mp3');
+            const arrayBuffer = await response.arrayBuffer();
+            kiaiBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        } catch (err) {
+            console.warn('kiai.mp3 asset não carregado ou não encontrado.');
+        }
     }
 };
 
@@ -163,22 +176,54 @@ export const playImpact = (type) => {
     osc.stop(audioCtx.currentTime + 0.2);
 };
 
-const kiaiAudio = new Audio('/kiai.mp3');
-kiaiAudio.volume = 0.9;
+// Tenta pré-carregar imediatamente o asset real
+const preloadKiai = async () => {
+    try {
+        const response = await fetch('/kiai.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+
+        // Se audioCtx já existe, decodifica, senão armazena arrayBuffer provisório
+        if (audioCtx) {
+            kiaiBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        } else {
+            // Em fallback, decodifica no initAudio()
+            window.__kiaiArrayBuffer = arrayBuffer;
+        }
+    } catch (err) {
+        console.warn('kiai.mp3 asset não carregado ou não encontrado.');
+    }
+};
+preloadKiai();
 
 export const playKiai = (beltIndex) => {
     if (!audioCtx) return;
 
-    // Clona o nó de áudio para permitir sobreposição de múltiplos gritos rápidos
-    const clone = kiaiAudio.cloneNode();
+    if (!kiaiBuffer && window.__kiaiArrayBuffer) {
+        audioCtx.decodeAudioData(window.__kiaiArrayBuffer)
+            .then(buf => {
+                kiaiBuffer = buf;
+                window.__kiaiArrayBuffer = null;
+                playKiai(beltIndex);
+            })
+            .catch(() => { });
+        return;
+    }
 
-    // Altera sutilmente o pitch: faixas pretas tem gritos mais lentos/graves
+    if (!kiaiBuffer) return;
+
+    const source = audioCtx.createBufferSource();
+    source.buffer = kiaiBuffer;
+
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = 0.9;
+
     const detune = (Math.random() * 0.15) - 0.05;
-    clone.playbackRate = (beltIndex >= 7 ? 0.85 : 1.05) + detune;
+    source.playbackRate.value = (beltIndex >= 7 ? 0.85 : 1.05) + detune;
 
-    clone.play().catch(() => {
-        // Ignora erros caso kiai.mp3 não exista ou o navegador bloqueie autoplay
-    });
+    source.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    source.start();
 };
 
 export const playMiss = () => {
