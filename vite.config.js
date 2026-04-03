@@ -7,6 +7,9 @@ export default defineConfig({
   server: {
     host: true, // Necessário para aceitar conexões vindas do Docker
     port: 5173,
+    allowedHosts: [
+      'zanshin.heyko.dev.br' // Libera o acesso pelo seu subdomínio
+    ],
     watch: {
       usePolling: true, // Garante detecção no volume Linux 
     },

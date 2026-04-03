@@ -72,3 +72,28 @@
   font-size: 0.8em;
   color: #757575;
 }
+
+.revive-button {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  background: transparent;
+  border: 1px solid #D4AF37;
+  color: #D4AF37;
+  padding: 10px 24px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.1em;
+}
+.revive-button:hover {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: #FFD700;
+  color: #FFD700;
+}
+.revive-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,41 +1,48 @@
 import { useEffect, useRef } from 'react';
-import { useStore } from '../store/useStore';
+import { useStore, BELT_LEVELS } from '../store/useStore';
 import { playTaiko } from '../utils/audio';
 
 export const useGameLoop = () => {
     const { updateEnemies, spawnEnemy, belt, gameMode } = useStore();
     const lastSpawnTime = useRef(0);
+    const lastFrameTime = useRef(0);
 
     useEffect(() => {
         let frameId;
-        let spawnRate = 3000;
 
-        // Ler a dificuldade atual pela belt
-        if (belt === 'Amarela') spawnRate = 2500;
-        if (belt === 'Verde') spawnRate = 2000;
-        if (belt === 'Marrom') spawnRate = 1500;
-        if (belt === 'Preta') spawnRate = 1000;
+        // Derive spawn rate from belt index for all belts
+        const beltIndex = BELT_LEVELS.findIndex(b => b.name === belt);
+        const baseRate = 3000;
+        const spawnRate = Math.max(800, baseRate - (beltIndex * 150));
 
         const loop = (time) => {
-            if (gameMode === 'PLAYING') {
-                updateEnemies();
+            // Calculate deltaTime in seconds (capped at 100ms to prevent spiral of death)
+            const deltaTime = lastFrameTime.current
+                ? Math.min((time - lastFrameTime.current) / 1000, 0.1)
+                : 1 / 60;
+            lastFrameTime.current = time;
 
-                // Timer baseado no spawnRate (funciona como metrônomo)
+            if (gameMode === 'PLAYING') {
+                updateEnemies(deltaTime);
+
                 if (time - lastSpawnTime.current > spawnRate) {
                     spawnEnemy();
-                    playTaiko(); // Som de batida ritmica a cada spawn (TOC)
+                    playTaiko();
                     lastSpawnTime.current = time;
                 }
             }
-            // Se estiver em TRANSITION (Subida de faixa), enemies terminam de sumir da tela mas não spawna novos.
+
             if (gameMode === 'TRANSITION') {
-                updateEnemies();
+                updateEnemies(deltaTime);
             }
 
             frameId = requestAnimationFrame(loop);
         };
 
         frameId = requestAnimationFrame(loop);
-        return () => cancelAnimationFrame(frameId);
+        return () => {
+            cancelAnimationFrame(frameId);
+            lastFrameTime.current = 0;
+        };
     }, [updateEnemies, spawnEnemy, belt, gameMode]);
 };

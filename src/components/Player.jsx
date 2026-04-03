@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 
 const Player = () => {
     const playerState = useStore((state) => state.playerState);
+    const belt = useStore((state) => state.belt);
 
     const getPlayerClass = () => {
         switch (playerState) {
@@ -16,18 +17,13 @@ const Player = () => {
         }
     };
 
-    const belt = useStore((state) => state.belt);
-
-    let idleImg = belt.includes('Preta') ? '/player_idle.png' : '/player_idle_white.png';
-    let punchImg = belt.includes('Preta') ? '/player_punch.png' : '/player_punch_white.png';
-    let kickImg = belt.includes('Preta') ? '/player_kick.png' : '/player_kick_white.png';
-
-    let imageSrc = idleImg;
-    if (playerState === 'ATTACK_L_PERFECT') {
-        imageSrc = punchImg;
-    } else if (playerState === 'ATTACK_R_PERFECT') {
-        imageSrc = kickImg;
-    }
+    // Use original sprites (perfect transparency) — white for colored belts, black for Preta
+    const isBlack = belt.includes('Preta');
+    const variant = isBlack ? '' : '_white';
+    
+    let imageSrc = `/player_idle${variant}.png`;
+    if (playerState === 'ATTACK_L_PERFECT') imageSrc = `/player_punch${variant}.png`;
+    else if (playerState === 'ATTACK_R_PERFECT') imageSrc = `/player_kick${variant}.png`;
 
     const getAuraColor = (beltName) => {
         if (beltName === 'Branca') return 'rgba(255, 255, 255, 0.4)';
@@ -37,40 +33,37 @@ const Player = () => {
         if (beltName === 'Verde') return 'rgba(0, 128, 0, 0.6)';
         if (beltName === 'Roxa') return 'rgba(128, 0, 128, 0.6)';
         if (beltName === 'Marrom') return 'rgba(139, 69, 19, 0.6)';
-        if (beltName.includes('Preta')) return 'rgba(150, 150, 255, 0.8)'; // Ghostly/Blueish master aura
+        if (beltName.includes('Preta')) return 'rgba(150, 150, 255, 0.8)';
         return 'rgba(255, 255, 255, 0.2)';
     };
 
-    const getBeltHex = (beltName) => {
-        if (beltName === 'Branca') return '#EEEEEE';
+    const getBeltColor = (beltName) => {
+        if (beltName === 'Branca') return null; // No overlay needed
         if (beltName === 'Amarela') return '#FFD700';
-        if (beltName === 'Vermelha') return '#FF0000';
+        if (beltName === 'Vermelha') return '#E80000';
         if (beltName === 'Laranja') return '#FF8C00';
-        if (beltName === 'Verde') return '#008000';
-        if (beltName === 'Roxa') return '#800080';
+        if (beltName === 'Verde') return '#228B22';
+        if (beltName === 'Roxa') return '#7B2D8E';
         if (beltName === 'Marrom') return '#8B4513';
-        return '#111111'; // Preta
+        return null; // Black belt uses its own sprite
     };
 
-    const getDansCount = (beltName) => {
-        if (!beltName.includes('Preta')) return 0;
-        const match = beltName.match(/(\d+)º/);
-        return match ? parseInt(match[1]) : 0;
-    };
+    const beltColor = getBeltColor(belt);
 
     return (
         <div className={`player-container ${getPlayerClass()}`}>
-            <div className="belt-indicator" style={{ backgroundColor: getBeltHex(belt) }}>
-                {getDansCount(belt) > 0 && Array.from({ length: getDansCount(belt) }).map((_, i) => (
-                    <span key={i} className="dan-stripe" />
-                ))}
-            </div>
             <img
                 src={imageSrc}
                 alt="Player Kimono"
                 className="player-sprite"
                 style={{ filter: `drop-shadow(0 0 15px ${getAuraColor(belt)})` }}
             />
+            {beltColor && (
+                <div
+                    className="belt-color-overlay"
+                    style={{ backgroundColor: beltColor }}
+                />
+            )}
         </div>
     );
 };

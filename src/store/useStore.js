@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { playImpact, playMiss, playLevelUp, playDamage, playKiai } from '../utils/audio';
+import { playImpact, playMiss, playLevelUp, playDamage, playKiai, playOss, setMasterVolume as setAudioMasterVolume, setSfxEnabled as setAudioSfxEnabled } from '../utils/audio';
 
 const ZONES = {
     PERFECT_MIN: 42, PERFECT_MAX: 48, // Lado Esquerdo (0 a 100)
@@ -30,6 +30,28 @@ export const BELT_LEVELS = [
     { name: 'Preta - 10º Dan', minScore: 8500, speed: 1.6, quote: "Mushin: A mente sem mente." }
 ];
 
+// --- ENEMY OBJECT POOL ---
+const POOL_SIZE = 20;
+let enemyPool = [];
+let nextEnemyId = 1;
+
+const acquireEnemy = (side, speed) => {
+    let enemy = enemyPool.pop();
+    if (!enemy) enemy = {};
+    enemy.id = nextEnemyId++;
+    enemy.side = side;
+    enemy.position = side === 'left' ? 0 : 100;
+    enemy.speed = speed;
+    enemy.type = 'shadow';
+    enemy.active = true;
+    return enemy;
+};
+
+const releaseEnemy = (enemy) => {
+    enemy.active = false;
+    if (enemyPool.length < POOL_SIZE) enemyPool.push(enemy);
+};
+
 export const useStore = create(
     persist(
         (set, get) => ({
@@ -38,6 +60,7 @@ export const useStore = create(
             score: 0,
             health: 100,
             combo: 0,
+            kime: 0, // 0-100, builds with perfect hits, activates Super
             enemies: [],
             comboEffects: [],
             playerState: 'IDLE',
@@ -50,11 +73,14 @@ export const useStore = create(
             // --- DADOS PERSISTENTES ---
             highScore: 0,
             totalTrainingYears: 0,
+            masterVolume: 1.0,
+            sfxEnabled: true,
+            language: 'pt-BR',
 
             // --- AÇÕES DO GAME FLOW ---
             startGame: () => set({
                 gameMode: 'PLAYING',
-                score: 0, health: 100, combo: 0, enemies: [], comboEffects: [],
+                score: 0, health: 100, combo: 0, kime: 0, enemies: [], comboEffects: [],
                 playerState: 'IDLE', belt: 'Branca',
                 bossState: 'IDLE', bossSequence: [], playerSequenceIndex: 0, bossChances: 3
             }),
@@ -63,7 +89,34 @@ export const useStore = create(
                 gameMode: state.gameMode === 'PLAYING' ? 'PAUSED' : 'PLAYING'
             })),
 
+            setMasterVolume: (vol) => {
+                setAudioMasterVolume(vol);
+                set({ masterVolume: vol });
+            },
+            setSfxEnabled: (enabled) => {
+                setAudioSfxEnabled(enabled);
+                set({ sfxEnabled: enabled });
+            },
+
+            setLanguage: (lang) => set({ language: lang }),
+
             setBossState: (state) => set({ bossState: state }),
+
+            // --- SUPER (KIME) ---
+            activateSuper: () => {
+                const { kime, enemies, score, gameMode } = get();
+                if (kime < 100 || gameMode !== 'PLAYING') return false;
+                const bonus = enemies.length * 30;
+                playImpact('PERFECT');
+                set({
+                    kime: 0,
+                    enemies: [],
+                    score: score + bonus,
+                    playerState: 'ATTACK_L_PERFECT',
+                });
+                setTimeout(() => set({ playerState: 'IDLE' }), 400);
+                return true;
+            },
 
             // --- AÇÕES DO JOGO ---
             spawnEnemy: () => {
@@ -91,36 +144,34 @@ export const useStore = create(
                     return;
                 }
 
-                // Normal Spawning (Faixa Branca a Marrom)
+                // Normal Spawning (Faixa Branca a Marrom) — uses object pool
                 const side = Math.random() > 0.5 ? 'left' : 'right';
-                const newEnemy = {
-                    id: Date.now() + Math.random(),
-                    side: side,
-                    position: side === 'left' ? 0 : 100,
-                    speed: currentBeltConfig.speed + (Math.random() * 0.05), // Less random to keep metronome feel
-                    type: 'shadow',
-                };
+                const speed = currentBeltConfig.speed + (Math.random() * 0.05);
+                const newEnemy = acquireEnemy(side, speed);
                 set((state) => ({ enemies: [...state.enemies, newEnemy] }));
             },
 
-            updateEnemies: () => {
+            updateEnemies: (deltaTime = 1/60) => {
                 const { gameMode, enemies, takeDamage } = get();
-                // Allow enemies to continue moving during transition, but not during pause
                 if (gameMode === 'PAUSED' || gameMode === 'MENU' || gameMode === 'GAMEOVER') return;
 
+                const dt = deltaTime * 60; // Normalize: at 60fps dt≈1, preserving original speed values
                 let hitByEnemy = false;
-                const updatedEnemies = enemies.map(enemy => {
-                    const newPos = enemy.side === 'left' ? enemy.position + enemy.speed : enemy.position - enemy.speed;
+                const surviving = [];
+                for (const enemy of enemies) {
+                    const newPos = enemy.side === 'left' ? enemy.position + enemy.speed * dt : enemy.position - enemy.speed * dt;
 
                     if ((enemy.side === 'left' && newPos >= 49) || (enemy.side === 'right' && newPos <= 51)) {
                         hitByEnemy = true;
-                        return null; // Atingiu o jogador, some
+                        releaseEnemy(enemy); // return to pool
+                    } else {
+                        // Spread to new object: React needs a new reference to detect change
+                        surviving.push({ ...enemy, position: newPos });
                     }
-                    return { ...enemy, position: newPos };
-                }).filter(e => e !== null);
+                }
 
                 if (hitByEnemy && gameMode === 'PLAYING') takeDamage();
-                set({ enemies: updatedEnemies });
+                set({ enemies: surviving });
             },
 
             addComboEffect: (side, isPerfect) => {
@@ -170,6 +221,7 @@ export const useStore = create(
                                 if (futureBelt !== belt) {
                                     set({ belt: futureBelt, gameMode: 'TRANSITION', bossState: 'IDLE' });
                                     playLevelUp();
+                                    playOss();
                                     setTimeout(() => set({ gameMode: 'PLAYING' }), 4000);
                                 } else {
                                     setTimeout(() => set({ bossState: 'IDLE' }), 1500); // Trigger next sequence
@@ -234,10 +286,12 @@ export const useStore = create(
                     if (futureBelt !== belt) {
                         nextBelt = futureBelt;
                         playLevelUp();
+                        playOss();
                         // Inicia transição para pausa da faixa
                         set({ gameMode: 'TRANSITION', belt: futureBelt });
 
-                        // Opcional: explodir todos inimigos da tela na hora de trocar de faixa para um clean slate
+                        // Release all enemies back to pool for a clean slate
+                        get().enemies.forEach(releaseEnemy);
                         set({ enemies: [] });
 
                         setTimeout(() => {
@@ -245,10 +299,15 @@ export const useStore = create(
                         }, 3000); // 3 segundos para respirar
                     }
 
+                    // Capture id BEFORE releasing — spawnEnemy may recycle this object
+                    // before the filter closure runs, overwriting the id (race condition)
+                    const killedId = closest.id;
+                    releaseEnemy(closest);
                     set(state => ({
-                        enemies: state.enemies.filter(e => e.id !== closest.id),
+                        enemies: state.enemies.filter(e => e.id !== killedId),
                         score: newScore,
                         combo: newCombo,
+                        kime: Math.min(100, state.kime + (isPerfect ? 15 : 5)),
                         belt: nextBelt,
                         playerState: side === 'left' ? 'ATTACK_L_PERFECT' : 'ATTACK_R_PERFECT'
                     }));
@@ -285,18 +344,39 @@ export const useStore = create(
                 }
             },
 
-            resetGame: () => set({
-                gameMode: 'MENU',
-                score: 0, health: 100, combo: 0, enemies: [], comboEffects: [],
-                playerState: 'IDLE', belt: 'Branca'
-            }),
+            resetGame: () => {
+                get().enemies.forEach(releaseEnemy);
+                set({
+                    gameMode: 'MENU',
+                    score: 0, health: 100, combo: 0, kime: 0, enemies: [], comboEffects: [],
+                    playerState: 'IDLE', belt: 'Branca'
+                });
+            },
         }),
         {
             name: 'zanshin-save-data',
-            storage: createJSONStorage(() => localStorage),
+            storage: createJSONStorage(() => {
+                try {
+                    // Test localStorage availability (incognito safety)
+                    localStorage.setItem('__test', '1');
+                    localStorage.removeItem('__test');
+                    return localStorage;
+                } catch {
+                    // Fallback: in-memory storage for incognito mode
+                    const mem = {};
+                    return {
+                        getItem: (k) => mem[k] ?? null,
+                        setItem: (k, v) => { mem[k] = v; },
+                        removeItem: (k) => { delete mem[k]; },
+                    };
+                }
+            }),
             partialize: (state) => ({
                 highScore: state.highScore,
-                totalTrainingYears: state.totalTrainingYears
+                totalTrainingYears: state.totalTrainingYears,
+                masterVolume: state.masterVolume,
+                sfxEnabled: state.sfxEnabled,
+                language: state.language,
             }),
         }
     )

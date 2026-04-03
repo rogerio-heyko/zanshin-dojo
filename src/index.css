@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Dela+Gothic+One&family=Shippori+Mincho:wght@400;700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
@@ -21,7 +23,9 @@ body {
     justify-content: center;
 }
 
-/* 1. O Céu Dinâmico */
+/* ============================================
+   1. STAGE WRAPPER & DYNAMIC SKY
+   ============================================ */
 .stage-wrapper {
     position: relative;
     width: 100vw;
@@ -30,76 +34,158 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-image: url('/background.png');
     background-size: cover;
     background-position: center;
     background-blend-mode: multiply;
-    transition: background-color 2s ease;
+    transition: background-color 2s ease, background-image 1.5s ease;
 }
 
-.sky-base {
-    background-color: #F5F5F1;
-}
+.sky-base    { background-color: #F5F5F1; }
+.sky-sakura  { background-color: #e8c7c8; }
+.sky-dusk    { background-color: #e0d7c6; }
+.sky-temple  { background-color: #0a0e1a; }
+.sky-mushin  { background-color: #1A1A1B; }
 
-.sky-dusk {
-    background-color: #e0d7c6;
-}
+/* Background images per scenario */
+.bg-dojo    { background-image: url('/background.png'); }
+.bg-sakura  { background-image: url('/bg_sakura.png'); }
+.bg-temple  { background-image: url('/bg_temple.png'); }
+.bg-mushin  { background-image: url('/bg_mushin.png'); }
 
-.sky-mushin {
-    background-color: #1A1A1B;
-}
-
-/* HUD */
+/* ============================================
+   2. HUD — FULLY RESPONSIVE
+   ============================================ */
 .hud-container {
     position: absolute;
-    top: 50px;
+    top: clamp(8px, 2.5vh, 50px);
     width: 100%;
-    max-width: 600px;
-    padding: 0 20px;
+    max-width: min(640px, 95vw);
+    padding: clamp(8px, 2vh, 14px) clamp(12px, 3vw, 24px);
     display: flex;
     flex-direction: column;
     z-index: 80;
+    /* Frosted backdrop for legibility on all scenarios */
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .current-stats {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: clamp(6px, 1.5vw, 14px);
     font-weight: bold;
-    color: #1A1A1B;
+    font-size: clamp(0.65rem, 1.8vw, 0.9rem);
+    color: #F5F5F1;        /* Always light — backdrop handles contrast */
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.06em;
 }
 
-.sky-mushin .current-stats {
+/* Override not needed anymore — backdrop makes all scenarios readable */
+.sky-mushin .current-stats,
+.sky-temple .current-stats,
+.sky-sakura .current-stats,
+.sky-base .current-stats {
     color: #F5F5F1;
-    /* Inverse color for readability */
 }
 
-.health-bar-container {
-    width: 100px;
-    height: 10px;
-    background-color: #757575;
-    margin-top: 5px;
+.vitality {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 90px;
 }
 
-.health-bar {
-    height: 100%;
-    transition: width 0.3s ease;
+.vitality .label,
+.belt-indicator .label {
+    font-size: clamp(0.55rem, 1.4vw, 0.7rem);
+    letter-spacing: 0.12em;
+    color: rgba(245, 245, 241, 0.6);
+    text-shadow: none;
+}
+
+/* Ki Orbs — replaces health bar */
+.ki-orbs {
+    display: flex;
+    gap: clamp(4px, 0.8vw, 6px);
+    align-items: center;
+}
+
+.ki-orb {
+    width: clamp(10px, 2vw, 16px);
+    height: clamp(10px, 2vw, 16px);
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.ki-orb.full {
+    background: var(--orb-color, #F5F5F1);
+    box-shadow: 0 0 8px var(--orb-color, #F5F5F1), 0 0 16px var(--orb-color, rgba(255,255,255,0.3));
+    border-color: var(--orb-color, #F5F5F1);
+}
+
+.ki-orb.partial {
+    background: var(--orb-color, #F5F5F1);
+    opacity: var(--partial, 0.5);
+    box-shadow: 0 0 6px var(--orb-color, #F5F5F1);
+    border-color: var(--orb-color, #F5F5F1);
+    animation: orbFlicker 0.8s ease-in-out infinite;
+}
+
+.ki-orb.empty {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes orbFlicker {
+    0%, 100% { opacity: var(--partial, 0.5); transform: scale(1); }
+    50%      { opacity: calc(var(--partial, 0.5) * 0.6); transform: scale(0.9); }
+}
+
+.belt-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.belt-color {
+    font-size: clamp(0.6rem, 1.5vw, 0.8rem);
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    color: #F5F5F1;
+}
+
+.score-display {
+    text-align: right;
+    min-width: 90px;
+    font-size: clamp(0.7rem, 1.8vw, 0.95rem);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
 }
 
 .combo-display {
-    margin-top: 20px;
+    margin-top: clamp(8px, 1.5vh, 20px);
     text-align: center;
-    font-size: 1.5rem;
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
     font-weight: bold;
     color: #D4AF37;
 }
 
-/* Combos flotuantes */
+/* ============================================
+   3. COMBO FLOATING TEXTS
+   ============================================ */
 .combo-text {
     position: absolute;
     font-weight: bold;
     pointer-events: none;
     font-family: 'Dela Gothic One', sans-serif;
+    font-size: clamp(0.9rem, 2.5vw, 1.4rem);
     z-index: 70;
 }
 
@@ -113,42 +199,39 @@ body {
     text-shadow: 0 0 5px #F5F5F1;
 }
 
-.sky-mushin .combo-text.normal {
+.sky-mushin .combo-text.normal,
+.sky-temple .combo-text.normal {
     color: #F5F5F1;
     text-shadow: 0 0 5px #1A1A1B;
 }
 
-
-/* Arena de Combate */
+/* ============================================
+   4. ARENA — RESPONSIVE STAGE CONTAINER
+   ============================================ */
 .stage-container {
     position: relative;
     width: 100%;
-    height: 400px;
+    height: clamp(260px, 42vh, 520px);
     display: flex;
     align-items: flex-end;
     justify-content: center;
     overflow: hidden;
-    margin-top: 15vh;
-    /* Empurra a linha de combate para baixo, para a madeira */
+    margin-top: clamp(5vh, 12vh, 18vh);
 }
 
-.stage-container::after {
-    display: none;
-}
+.stage-container::after { display: none; }
+.sky-mushin .stage-container::after { display: none; }
 
-.sky-mushin .stage-container::after {
-    display: none;
-}
-
-
-/* Jogador */
+/* ============================================
+   5. PLAYER — RESPONSIVE
+   ============================================ */
 .player-container {
     position: absolute;
     bottom: 0px;
     left: 50%;
     transform: translateX(-50%);
-    width: 200px;
-    height: 200px;
+    width: clamp(100px, 18vw, 200px);
+    height: clamp(100px, 18vw, 200px);
     background-color: transparent;
     transition: transform 0.05s ease;
     z-index: 10;
@@ -169,31 +252,16 @@ body {
 }
 
 @keyframes breathe {
-    0% {
-        transform: scaleY(1);
-    }
-
-    50% {
-        transform: scaleY(1.02) translateY(-2px);
-    }
-
-    100% {
-        transform: scaleY(1);
-    }
+    0%   { transform: scaleY(1); }
+    50%  { transform: scaleY(1.02) translateY(-2px); }
+    100% { transform: scaleY(1); }
 }
 
-.player-strike-left .player-sprite {
-    transform: translateX(-40px) scale(1.0);
-    /* O soco original estava invertido acidentalmente, agora aponta para a esquerda */
-}
-
-.player-strike-right .player-sprite {
-    transform: translateX(40px) scale(1.0);
-    /* O chute voador mantem a escala nativa */
-}
+.player-strike-left .player-sprite  { transform: translateX(-40px) scale(1.0); }
+.player-strike-right .player-sprite { transform: translateX(40px) scale(1.0); }
 
 /* Belt visual HUD over player head */
-.belt-indicator {
+.belt-indicator-head {
     position: absolute;
     top: -20px;
     width: 60px;
@@ -221,19 +289,58 @@ body {
 .player-damaged .player-container {
     opacity: 0.5;
     filter: sepia(1) hue-rotate(-50deg) saturate(5);
-    /* Red damage tint */
     animation: shake 0.2s infinite;
 }
 
-/* BOSS ANCESTRAL */
+/* ============================================
+   6. HIT FLASH & DAMAGE VIGNETTE
+   ============================================ */
+.hit-flash-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 75;
+    border-radius: 0;
+    animation: hitFlash 0.2s ease-out forwards;
+}
+
+.hit-flash-overlay.perfect {
+    background: radial-gradient(circle at center, rgba(212,175,55,0.5) 0%, transparent 70%);
+}
+
+.hit-flash-overlay.normal {
+    background: radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, transparent 70%);
+}
+
+@keyframes hitFlash {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.damage-vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 74;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(183,28,28,0.7) 100%);
+    animation: damageVignette 0.4s ease-out forwards;
+}
+
+@keyframes damageVignette {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ============================================
+   7. BOSS ANCESTRAL
+   ============================================ */
 .boss-container {
     position: absolute;
     top: 5%;
     left: 50%;
     transform: translateX(-50%);
-    width: 60vw;
-    max-width: 450px;
-    height: 60vh;
+    width: clamp(200px, 50vw, 450px);
+    height: clamp(180px, 50vh, 60vh);
     z-index: 10;
     pointer-events: none;
     mix-blend-mode: screen;
@@ -248,20 +355,15 @@ body {
 }
 
 @keyframes bossHover {
-    from {
-        transform: translateX(-50%) translateY(-15px);
-    }
-
-    to {
-        transform: translateX(-50%) translateY(15px);
-    }
+    from { transform: translateX(-50%) translateY(-15px); }
+    to   { transform: translateX(-50%) translateY(15px); }
 }
 
 /* Boss Sequence UI */
 .boss-flash {
     position: absolute;
-    width: 120px;
-    height: 120px;
+    width: clamp(80px, 15vw, 120px);
+    height: clamp(80px, 15vw, 120px);
     border-radius: 50%;
     filter: blur(15px);
     top: 50%;
@@ -271,39 +373,25 @@ body {
 }
 
 @keyframes pulseFlash {
-    0% {
-        transform: translateY(-50%) scale(0.5);
-        opacity: 1;
-    }
-
-    100% {
-        transform: translateY(-50%) scale(1.5);
-        opacity: 0;
-    }
+    0%   { transform: translateY(-50%) scale(0.5); opacity: 1; }
+    100% { transform: translateY(-50%) scale(1.5); opacity: 0; }
 }
 
-.flash-left {
-    background: rgba(0, 255, 255, 0.8);
-    left: -40px;
-}
-
-.flash-right {
-    background: rgba(255, 0, 255, 0.8);
-    right: -40px;
-}
+.flash-left  { background: rgba(0, 255, 255, 0.8); left: -40px; }
+.flash-right { background: rgba(255, 0, 255, 0.8); right: -40px; }
 
 .boss-sequence-ui {
     position: absolute;
-    bottom: -60px;
+    bottom: clamp(-80px, -10vh, -60px);
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 15px;
+    gap: clamp(8px, 2vw, 15px);
 }
 
 .sequence-orb {
-    width: 40px;
-    height: 40px;
+    width: clamp(30px, 7vw, 40px);
+    height: clamp(30px, 7vw, 40px);
     border-radius: 8px;
     border: 2px solid rgba(255, 255, 255, 0.4);
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
@@ -311,27 +399,20 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 24px;
+    font-size: clamp(16px, 4vw, 24px);
     color: white;
     font-weight: bold;
     background: rgba(0, 0, 0, 0.5);
 }
 
-.sequence-orb.left {
-    border-color: rgba(0, 255, 255, 0.6);
-}
-
-.sequence-orb.right {
-    border-color: rgba(255, 0, 255, 0.6);
-}
-
+.sequence-orb.left  { border-color: rgba(0, 255, 255, 0.6); }
+.sequence-orb.right { border-color: rgba(255, 0, 255, 0.6); }
 .sequence-orb.filled {
     background: white;
     color: black;
     box-shadow: 0 0 15px white;
     border-color: white;
 }
-
 .sequence-orb.fail-orb {
     border-color: red;
     background: rgba(255, 0, 0, 0.8);
@@ -345,14 +426,9 @@ body {
     transform: translateX(-50%);
     color: yellow;
     font-weight: bold;
-    font-size: 16px;
+    font-size: clamp(12px, 2.5vw, 16px);
     text-shadow: 0px 0px 5px black;
     white-space: nowrap;
-}
-
-.sequence-orb.fail-orb {
-    border-color: red;
-    background: rgba(255, 0, 0, 0.5);
 }
 
 .boss-fail .boss-sprite {
@@ -360,13 +436,15 @@ body {
     filter: sepia(1) hue-rotate(-50deg) saturate(5);
 }
 
-/* Inimigos */
+/* ============================================
+   8. ENEMIES — RESPONSIVE
+   ============================================ */
 .enemy-shadow {
     position: absolute;
     bottom: 0px;
     transform: translateX(-50%);
-    width: 190px;
-    height: 190px;
+    width: clamp(120px, 17vw, 190px);
+    height: clamp(120px, 17vw, 190px);
     background-color: transparent;
     z-index: 5;
 }
@@ -375,27 +453,59 @@ body {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    animation: run-bob 0.3s infinite alternate ease-in-out;
+    /* Genuine running cycle: lean forward + stride bounce */
+    animation: enemy-run 0.35s infinite ease-in-out;
+    transform-origin: bottom center;
 }
 
-@keyframes run-bob {
-    0% {
-        transform: translateY(0) rotate(3deg);
-    }
-
-    100% {
-        transform: translateY(-8px) rotate(-3deg);
-    }
+/* Running toward center from the LEFT */
+.face-right .enemy-sprite,
+.enemy-shadow:not(:has(.face-left)) .enemy-sprite {
+    animation: enemy-run-right 0.35s infinite ease-in-out;
 }
 
-/* Impact Zone (Enso circle) */
+/* Running toward center from the RIGHT (mirrored) */
+.face-left .enemy-sprite {
+    animation: enemy-run-left 0.35s infinite ease-in-out;
+}
+
+@keyframes enemy-run-right {
+    0%   { transform: translateY(0px)   rotate(-8deg) scaleX(1); }
+    25%  { transform: translateY(-10px) rotate(-5deg) scaleX(1.04); }
+    50%  { transform: translateY(0px)   rotate(-8deg) scaleX(1); }
+    75%  { transform: translateY(-6px)  rotate(-10deg) scaleX(0.97); }
+    100% { transform: translateY(0px)   rotate(-8deg) scaleX(1); }
+}
+
+@keyframes enemy-run-left {
+    0%   { transform: translateY(0px)   rotate(8deg)  scaleX(-1); }
+    25%  { transform: translateY(-10px) rotate(5deg)  scaleX(-1.04); }
+    50%  { transform: translateY(0px)   rotate(8deg)  scaleX(-1); }
+    75%  { transform: translateY(-6px)  rotate(10deg) scaleX(-0.97); }
+    100% { transform: translateY(0px)   rotate(8deg)  scaleX(-1); }
+}
+
+/* Enemy defeat animation */
+.enemy-defeated {
+    animation: enemyDefeat 0.25s ease-out forwards;
+}
+
+@keyframes enemyDefeat {
+    0%   { transform: translateX(-50%) scale(1); opacity: 1; }
+    50%  { transform: translateX(-50%) scale(1.3) rotate(15deg); opacity: 0.6; }
+    100% { transform: translateX(-50%) scale(0) rotate(30deg); opacity: 0; }
+}
+
+/* ============================================
+   9. IMPACT ZONE (Ensō Circle)
+   ============================================ */
 .impact-zone-visual {
     position: absolute;
     bottom: -20px;
     left: 50%;
     transform: translateX(-50%);
-    width: 200px;
-    height: 55px;
+    width: clamp(120px, 18vw, 200px);
+    height: clamp(35px, 6vh, 55px);
     border: 3px solid rgba(26, 26, 27, 0.1);
     border-radius: 50%;
     border-right-color: transparent;
@@ -403,77 +513,81 @@ body {
     animation: pulse-impact 2s infinite;
 }
 
-.sky-mushin .impact-zone-visual {
+.sky-mushin .impact-zone-visual,
+.sky-temple .impact-zone-visual {
     border: 3px solid rgba(245, 245, 241, 0.2);
     border-right-color: transparent;
     border-top-color: rgba(183, 28, 28, 0.8);
 }
 
 @keyframes pulse-impact {
-    0% {
-        transform: translateX(-50%) scale(1);
-        opacity: 0.3;
-    }
-
-    50% {
-        transform: translateX(-50%) scale(1.05);
-        opacity: 0.8;
-    }
-
-    100% {
-        transform: translateX(-50%) scale(1);
-        opacity: 0.3;
-    }
+    0%   { transform: translateX(-50%) scale(1); opacity: 0.3; }
+    50%  { transform: translateX(-50%) scale(1.05); opacity: 0.8; }
+    100% { transform: translateX(-50%) scale(1); opacity: 0.3; }
 }
 
-/* Screen Shake / Take Damage */
+/* ============================================
+   10. SCREEN SHAKE / SCREEN EFFECTS
+   ============================================ */
 .screen-shake {
     animation: shake 0.2s cubic-bezier(.36, .07, .19, .97) both;
 }
 
 @keyframes shake {
-
-    10%,
-    90% {
-        transform: translate3d(-2px, 0, 0);
-    }
-
-    20%,
-    80% {
-        transform: translate3d(4px, 0, 0);
-    }
-
-    30%,
-    50%,
-    70% {
-        transform: translate3d(-8px, 0, 0);
-    }
-
-    40%,
-    60% {
-        transform: translate3d(8px, 0, 0);
-    }
+    10%, 90% { transform: translate3d(-2px, 0, 0); }
+    20%, 80%  { transform: translate3d(4px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+    40%, 60%  { transform: translate3d(8px, 0, 0); }
 }
 
-/* Touch controls */
+/* ============================================
+   11. TOUCH CONTROLS — VISIBLE ON MOBILE
+   ============================================ */
 .touch-interface {
     position: absolute;
     inset: 0;
     display: flex;
     z-index: 50;
+    pointer-events: all;
 }
 
 .touch-btn {
     flex: 1;
     height: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: clamp(10px, 4vh, 30px);
+    transition: background 0.1s;
 }
 
 .touch-btn:active {
-    background: rgba(183, 28, 28, 0.05);
-    /* Slight flash of red when tapped */
+    background: rgba(183, 28, 28, 0.08);
 }
 
-/* Borders/Moldura */
+/* Touch arrows — só visíveis em dispositivos de toque */
+.touch-arrow {
+    display: none;
+    font-size: clamp(2rem, 8vw, 4rem);
+    opacity: 0.25;
+    color: #F5F5F1;
+    pointer-events: none;
+    animation: arrowPulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8));
+}
+
+@keyframes arrowPulse {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50%       { opacity: 0.45; transform: scale(1.1); }
+}
+
+@media (pointer: coarse) {
+    .touch-arrow { display: block; }
+}
+
+/* ============================================
+   12. BORDERS / MOLDURA
+   ============================================ */
 .ink-frame-overlay {
     position: absolute;
     inset: 0;
@@ -483,6 +597,357 @@ body {
     z-index: 60;
 }
 
+/* ============================================
+   13. MODAL / OVERLAYS
+   ============================================ */
+.game-over-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: clamp(10px, 3vw, 30px);
+}
+
+.game-over-modal {
+    background: rgba(10, 10, 10, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: clamp(20px, 5vw, 50px) clamp(20px, 6vw, 60px);
+    max-width: min(520px, 92vw);
+    width: 100%;
+    text-align: center;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.title {
+    font-family: 'Dela Gothic One', sans-serif;
+    font-size: clamp(2rem, 7vw, 3.5rem);
+    color: #B71C1C;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 30px rgba(183, 28, 28, 0.6);
+    animation: titleEntrance 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+@keyframes titleEntrance {
+    0%   { opacity: 0; transform: scale(0.8) translateY(-20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ============================================
+   14. HOW TO PLAY — TUTORIAL
+   ============================================ */
+.how-to-play {
+    margin: clamp(12px, 2.5vh, 20px) 0;
+    padding: clamp(10px, 2vh, 16px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    text-align: left;
+    animation: fadeInUp 0.5s 0.3s ease both;
+}
+
+@keyframes fadeInUp {
+    0%   { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.how-to-play-title {
+    font-size: clamp(0.55rem, 1.4vw, 0.65rem);
+    letter-spacing: 0.15em;
+    color: #757575;
+    margin-bottom: clamp(8px, 1.5vh, 12px);
+    text-align: center;
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(6px, 1.5vw, 12px);
+    margin-bottom: clamp(10px, 2vh, 14px);
+}
+
+.control-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: clamp(6px, 1.5vw, 10px);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+}
+
+.control-key {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+kbd {
+    display: inline-block;
+    padding: 2px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(0.7rem, 1.8vw, 0.9rem);
+    font-weight: bold;
+    color: #F5F5F1;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-bottom: 3px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    line-height: 1.4;
+}
+
+/* No mobile (pointer: coarse), troca kbd por ícone de toque */
+@media (pointer: coarse) {
+    kbd { display: none; }
+    .touch-icon { display: inline-block !important; }
+}
+
+.touch-icon {
+    display: none;
+    font-size: 1.2rem;
+}
+
+.control-label {
+    font-size: clamp(0.5rem, 1.3vw, 0.6rem);
+    color: #9e9e9e;
+    text-align: center;
+}
+
+.control-direction {
+    font-size: clamp(0.65rem, 1.6vw, 0.75rem);
+    color: #F5F5F1;
+    font-weight: bold;
+}
+
+.game-objective {
+    font-size: clamp(0.5rem, 1.3vw, 0.6rem);
+    color: #757575;
+    text-align: center;
+    line-height: 1.6;
+    font-style: italic;
+}
+
+/* ============================================
+   15. RETRY / START BUTTON
+   ============================================ */
+.retry-button {
+    margin-top: clamp(16px, 3vh, 30px);
+    padding: clamp(10px, 2vh, 14px) clamp(24px, 6vw, 40px);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
+    font-weight: bold;
+    letter-spacing: 0.15em;
+    color: #F5F5F1;
+    background: transparent;
+    border: 2px solid #F5F5F1;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+    width: 100%;
+}
+
+.retry-button:hover {
+    background: #F5F5F1;
+    color: #1A1A1B;
+    transform: scale(1.02);
+}
+
+.leaderboard-button {
+    margin-top: 12px;
+    padding: clamp(10px, 2vh, 14px) clamp(24px, 6vw, 40px);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
+    font-weight: bold;
+    letter-spacing: 0.15em;
+    color: #D4AF37;
+    background: transparent;
+    border: 2px solid #D4AF37;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+    width: 100%;
+}
+
+.leaderboard-button:hover {
+    background: #D4AF37;
+    color: #1A1A1B;
+    transform: scale(1.02);
+}
+
+/* ============================================
+   16. GAME OVER SCREEN
+   ============================================ */
+.game-over-title {
+    font-family: 'Dela Gothic One', sans-serif;
+    font-size: clamp(2.2rem, 8vw, 4rem);
+    color: #B71C1C;
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(183,28,28,0.8);
+    animation: gameOverEntrance 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes gameOverEntrance {
+    0%   { opacity: 0; transform: scale(1.4); filter: blur(8px); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+.score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: clamp(6px, 1.5vh, 10px) 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: clamp(0.6rem, 1.6vw, 0.75rem);
+    letter-spacing: 0.1em;
+}
+
+.score-value {
+    font-size: clamp(0.75rem, 2vw, 0.9rem);
+    font-weight: bold;
+    color: #D4AF37;
+}
+
+.quote-block {
+    margin: clamp(12px, 2.5vh, 20px) 0;
+    padding-left: clamp(10px, 2.5vw, 16px);
+    border-left: 2px solid #B71C1C;
+    text-align: left;
+}
+
+.quote-text {
+    font-family: 'Shippori Mincho', serif;
+    font-style: italic;
+    font-size: clamp(0.65rem, 1.7vw, 0.8rem);
+    color: #c8c8c2;
+    line-height: 1.6;
+}
+
+.quote-author {
+    font-size: clamp(0.5rem, 1.3vw, 0.6rem);
+    letter-spacing: 0.15em;
+    color: #757575;
+    margin-top: 6px;
+}
+
+.legacy-text {
+    font-size: clamp(0.5rem, 1.3vw, 0.6rem);
+    color: #757575;
+    margin-bottom: clamp(8px, 1.5vh, 12px);
+}
+
+.revive-button {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    background: transparent;
+    border: 1px solid #D4AF37;
+    color: #D4AF37;
+    padding: clamp(8px, 1.5vh, 12px) clamp(20px, 5vw, 36px);
+    font-size: clamp(0.6rem, 1.5vw, 0.75rem);
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em;
+}
+.revive-button:hover {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: #FFD700;
+    color: #FFD700;
+    transform: scale(1.02);
+}
+.revive-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ============================================
+   17. TRANSITION OVERLAY
+   ============================================ */
+.transition-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.75);
+}
+
+.transition-title {
+    font-family: 'Dela Gothic One', sans-serif;
+    font-size: clamp(2rem, 8vw, 4rem);
+    color: #F5F5F1;
+    letter-spacing: 0.1em;
+    text-align: center;
+}
+
+.transition-quote {
+    font-family: 'Shippori Mincho', serif;
+    font-style: italic;
+    font-size: clamp(0.7rem, 2vw, 1rem);
+    color: #c8c8c2;
+    text-align: center;
+    max-width: min(400px, 85vw);
+    margin-top: 16px;
+    line-height: 1.7;
+}
+
+/* ============================================
+   18. SAKURA PARTICLES
+   ============================================ */
+.sakura-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.petal {
+    position: absolute;
+    top: -20px;
+    width: clamp(6px, 1.5vw, 12px);
+    height: clamp(6px, 1.5vw, 12px);
+    border-radius: 50% 0;
+    background: rgba(255, 182, 193, 0.7);
+    animation: petalFall linear infinite;
+    transform-origin: center;
+}
+
+.petal:nth-child(odd)  { background: rgba(255, 200, 210, 0.6); border-radius: 0 50%; }
+.petal:nth-child(3n)   { background: rgba(240, 160, 175, 0.5); }
+
+@keyframes petalFall {
+    0%   { transform: translateY(0) rotate(0deg) translateX(0); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(105vh) rotate(720deg) translateX(40px); opacity: 0; }
+}
+
+/* Ink particle for mushin mode */
+.ink-particle {
+    position: absolute;
+    width: clamp(2px, 0.5vw, 4px);
+    height: clamp(10px, 2vh, 20px);
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+    animation: inkFloat linear infinite;
+}
+
+@keyframes inkFloat {
+    0%   { transform: translateY(110vh) scaleY(1); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.4; }
+    100% { transform: translateY(-10vh) scaleY(1.5); opacity: 0; }
+}
+
+/* ============================================
+   19. START PROMPT & MISC
+   ============================================ */
 .start-prompt {
     position: absolute;
     top: 40%;
@@ -490,12 +955,543 @@ body {
     font-family: 'Shippori Mincho', serif;
     opacity: 0.8;
     pointer-events: none;
+    font-size: clamp(0.7rem, 1.8vw, 0.9rem);
 }
 
-.face-left {
-    transform: scaleX(-1) !important;
+.face-left  { transform: scaleX(-1) !important; }
+.face-right { transform: scaleX(1) !important; }
+
+/* ============================================
+   20. LANDSCAPE MOBILE FIX
+   ============================================ */
+@media (orientation: landscape) and (max-height: 500px) {
+    .stage-container {
+        height: clamp(160px, 55vh, 280px);
+        margin-top: 5vh;
+    }
+
+    .hud-container {
+        top: 4px;
+        flex-direction: row;
+        justify-content: space-between;
+        max-width: 100%;
+        padding: 0 clamp(8px, 2vw, 16px);
+    }
+
+    .current-stats {
+        flex-wrap: nowrap;
+        font-size: 0.5rem;
+    }
+
+    .game-over-modal {
+        padding: 12px 20px;
+        max-height: 85vh;
+    }
+
+    .how-to-play { display: none; } /* Space too limited */
+
+    .title {
+        font-size: clamp(1.2rem, 5vw, 2rem);
+    }
 }
 
-.face-right {
-    transform: scaleX(1) !important;
+/* ============================================
+   21. BELT COLOR TAG (HUD)
+   ============================================ */
+.belt-color {
+    font-size: clamp(0.5rem, 1.2vw, 0.65rem);
+    padding: 2px 6px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.1);
+}
+
+/* ============================================
+   22. LEADERBOARD
+   ============================================ */
+.leaderboard-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 110;
+    padding: clamp(10px, 3vw, 20px);
+}
+
+.leaderboard-modal {
+    background: rgba(15, 15, 15, 0.95);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 8px;
+    padding: clamp(16px, 4vw, 24px);
+    width: 100%;
+    max-width: min(480px, 92vw);
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.leaderboard-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: #757575;
+    font-size: 1.8rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.leaderboard-close:hover {
+    color: #F5F5F1;
+}
+
+.leaderboard-title {
+    font-family: 'Dela Gothic One', sans-serif;
+    font-size: clamp(1.2rem, 4vw, 1.8rem);
+    color: #D4AF37;
+    text-align: center;
+    margin-bottom: 16px;
+    letter-spacing: 0.1em;
+}
+
+.leaderboard-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.filter-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #9e9e9e;
+    padding: 6px 12px;
+    font-size: clamp(0.6rem, 1.5vw, 0.7rem);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.filter-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #F5F5F1;
+}
+
+.filter-btn.active {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: #D4AF37;
+    color: #D4AF37;
+}
+
+.leaderboard-loading,
+.leaderboard-empty {
+    text-align: center;
+    color: #757575;
+    padding: 24px;
+    font-size: clamp(0.7rem, 1.5vw, 0.8rem);
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.leaderboard-entry {
+    display: grid;
+    grid-template-columns: 40px 1fr 80px 70px;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    font-size: clamp(0.65rem, 1.4vw, 0.75rem);
+}
+
+.leaderboard-entry.rank-1 {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), transparent);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.leaderboard-entry.rank-2 {
+    background: rgba(192, 192, 192, 0.1);
+}
+
+.leaderboard-entry.rank-3 {
+    background: rgba(205, 127, 50, 0.1);
+}
+
+.rank-num {
+    color: #757575;
+    font-weight: bold;
+}
+
+.leaderboard-entry.rank-1 .rank-num { color: #FFD700; }
+.leaderboard-entry.rank-2 .rank-num { color: #C0C0C0; }
+.leaderboard-entry.rank-3 .rank-num { color: #CD7F32; }
+
+.player-name {
+    color: #F5F5F1;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player-belt {
+    text-align: center;
+    font-size: clamp(0.5rem, 1.2vw, 0.6rem);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.player-score {
+    text-align: right;
+    color: #D4AF37;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+}
+
+.leaderboard-submit {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.your-score {
+    text-align: center;
+    color: #9e9e9e;
+    font-size: clamp(0.65rem, 1.4vw, 0.75rem);
+    margin-bottom: 10px;
+}
+
+.your-score strong {
+    color: #D4AF37;
+}
+
+.submit-row {
+    display: flex;
+    gap: 10px;
+}
+
+.submit-row input {
+    flex: 1;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #F5F5F1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(0.7rem, 1.5vw, 0.8rem);
+}
+
+.submit-row input::placeholder {
+    color: #757575;
+}
+
+.submit-row input:focus {
+    outline: none;
+    border-color: #D4AF37;
+}
+
+.submit-row button {
+    padding: 10px 20px;
+    background: #D4AF37;
+    border: none;
+    border-radius: 4px;
+    color: #1A1A1B;
+    font-weight: bold;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(0.65rem, 1.4vw, 0.75rem);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.submit-row button:hover:not(:disabled) {
+    background: #E5C158;
+    transform: scale(1.02);
+}
+
+.submit-row button:disabled {
+    background: #555;
+    color: #888;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   23. SPLASH SCREEN
+   ============================================ */
+.splash-screen {
+    position: fixed;
+    inset: 0;
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.splash-kanji {
+    font-family: 'Shippori Mincho', serif;
+    font-size: clamp(6rem, 20vw, 12rem);
+    color: #F5F5F1;
+    text-shadow: 0 0 60px rgba(245, 245, 241, 0.3);
+    line-height: 1;
+}
+
+.splash-meaning {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(0.6rem, 1.5vw, 0.8rem);
+    letter-spacing: 0.3em;
+    color: rgba(245, 245, 241, 0.6);
+    margin-top: 16px;
+}
+
+.splash-loading {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #B71C1C, transparent);
+}
+
+/* ============================================
+   24. KATANA SLASH TRANSITION
+   ============================================ */
+.katana-slash-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(0, 0, 0, 0.95) 0%,
+        rgba(183, 28, 28, 0.3) 50%,
+        rgba(0, 0, 0, 0.95) 100%
+    );
+    z-index: 150;
+    pointer-events: none;
+}
+
+.katana-slash-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #fff, transparent);
+    animation: slashLine 0.3s ease-out forwards;
+    transform: rotate(30deg);
+    transform-origin: left center;
+}
+
+@keyframes slashLine {
+    0%   { transform: rotate(30deg) scaleX(0); opacity: 1; }
+    100% { transform: rotate(30deg) scaleX(1); opacity: 0; }
+}
+
+/* ============================================
+   25. CRITICAL VIGNETTE (approach warning)
+   ============================================ */
+.critical-vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 55;
+    box-shadow: inset 0 0 80px 20px rgba(255, 255, 255, 0.3);
+    transition: opacity 0.1s ease;
+}
+
+/* ============================================
+   26. CUSTOM INK CURSOR
+   ============================================ */
+.stage-wrapper {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='6' fill='%231A1A1B' opacity='0.7'/%3E%3Ccircle cx='12' cy='12' r='4' fill='%231A1A1B'/%3E%3Ccircle cx='14' cy='10' r='2' fill='%231A1A1B' opacity='0.5'/%3E%3Ccircle cx='9' cy='14' r='1.5' fill='%231A1A1B' opacity='0.4'/%3E%3C/svg%3E") 12 12, auto;
+}
+
+/* Light cursor for dark backgrounds */
+.stage-wrapper.sky-mushin,
+.stage-wrapper.sky-temple {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='6' fill='%23F5F5F1' opacity='0.5'/%3E%3Ccircle cx='12' cy='12' r='4' fill='%23F5F5F1' opacity='0.8'/%3E%3Ccircle cx='14' cy='10' r='2' fill='%23F5F5F1' opacity='0.4'/%3E%3Ccircle cx='9' cy='14' r='1.5' fill='%23F5F5F1' opacity='0.3'/%3E%3C/svg%3E") 12 12, auto;
+}
+
+/* ============================================
+   27. KIME BAR (Super Energy)
+   ============================================ */
+.kime-bar-container {
+    margin-top: clamp(4px, 0.8vh, 8px);
+    display: flex;
+    align-items: center;
+    gap: clamp(6px, 1.2vw, 10px);
+    padding: 0 clamp(10px, 3vw, 20px);
+}
+
+.kime-label {
+    font-size: clamp(0.45rem, 1.1vw, 0.55rem);
+    letter-spacing: 0.12em;
+    color: rgba(245, 245, 241, 0.4);
+    white-space: nowrap;
+    transition: color 0.3s;
+}
+
+.kime-bar-track {
+    flex: 1;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.kime-bar-fill {
+    height: 100%;
+    transition: width 0.2s ease;
+}
+
+/* Kime ready state — pulsing gold */
+.kime-ready .kime-label {
+    color: #FFD700;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+
+.kime-ready .kime-bar-track {
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
+}
+
+.kime-ready .kime-bar-fill {
+    animation: kimePulse 1s ease-in-out infinite;
+}
+
+@keyframes kimePulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(255, 215, 0, 0.5); }
+    50%      { opacity: 0.7; box-shadow: 0 0 12px rgba(255, 215, 0, 0.9); }
+}
+
+/* ============================================
+   28. SUPER FLASH OVERLAY
+   ============================================ */
+.super-flash-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 120;
+    pointer-events: none;
+}
+
+/* ============================================
+   29. MEDITATION SCREEN
+   ============================================ */
+.meditation-modal {
+    max-width: min(420px, 90vw);
+}
+
+.meditation-setting {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: clamp(10px, 2vh, 16px) 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.setting-label {
+    font-size: clamp(0.55rem, 1.3vw, 0.65rem);
+    letter-spacing: 0.12em;
+    color: rgba(245, 245, 241, 0.6);
+}
+
+.setting-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.setting-value {
+    font-size: clamp(0.6rem, 1.4vw, 0.7rem);
+    color: #D4AF37;
+    font-variant-numeric: tabular-nums;
+    min-width: 36px;
+    text-align: right;
+}
+
+.volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: clamp(80px, 18vw, 140px);
+    height: 3px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #D4AF37;
+    cursor: pointer;
+    border: 2px solid #1A1A1B;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #D4AF37;
+    cursor: pointer;
+    border: 2px solid #1A1A1B;
+}
+
+.toggle-btn {
+    padding: 6px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(0.55rem, 1.3vw, 0.65rem);
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: #757575;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toggle-btn.active {
+    border-color: #D4AF37;
+    color: #D4AF37;
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.meditation-legacy {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.legacy-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: clamp(0.55rem, 1.3vw, 0.65rem);
+    color: rgba(245, 245, 241, 0.5);
+    letter-spacing: 0.08em;
+}
+
+.legacy-value {
+    color: #D4AF37;
+    font-weight: bold;
+}
+
+/* ============================================
+   30. PRIVACY POLICY (inline)
+   ============================================ */
+.privacy-notice {
+    font-size: clamp(0.4rem, 1vw, 0.5rem);
+    color: rgba(245, 245, 241, 0.3);
+    text-align: center;
+    margin-top: 12px;
+    line-height: 1.5;
 }

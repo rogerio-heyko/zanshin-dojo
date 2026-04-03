@@ -1,15 +1,58 @@
-version: '3.8'
-
 services:
+  # Banco de Dados
+  postgres:
+    image: postgres:15-alpine
+    container_name: zanshin_postgres
+    environment:
+      POSTGRES_USER: zanshin
+      POSTGRES_PASSWORD: zanshin123
+      POSTGRES_DB: zanshin_leaderboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U zanshin" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Backend (API)
+  zanshin-api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: zanshin_api
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=zanshin
+      - DB_PASSWORD=zanshin123
+      - DB_NAME=zanshin_leaderboard
+      - PORT=3001
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Frontend (App)
   zanshin-app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: zanshin_dojo_dev
     ports:
       - "5173:5173"
     volumes:
       - .:/app
-      - /app/node_modules # Evita sobrescrever os módulos do container
+      - /app/node_modules
     environment:
-      - CHOKIDAR_USEPOLLING=true # Necessário para o Hot Reload no Linux
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=http://localhost:3001
     stdin_open: true
     tty: true
+
+volumes:
+  postgres_data:

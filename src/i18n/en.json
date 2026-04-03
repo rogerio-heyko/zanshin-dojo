@@ -1,0 +1,69 @@
+{
+    "menu": {
+        "title": "ZANSHIN",
+        "subtitle": "THE LAST DOJO",
+        "startGame": "START TRAINING",
+        "meditation": "MEDITATION",
+        "ranking": "RANKING"
+    },
+    "howToPlay": {
+        "title": "HOW TO PLAY",
+        "leftDir": "← LEFT",
+        "rightDir": "RIGHT →",
+        "leftAction": "Attack from the left",
+        "rightAction": "Attack from the right",
+        "objective": "Enemies approach from both sides. Strike at the right moment to defend the Dojo. Perfect timing builds combos and higher scores. Good luck!"
+    },
+    "hud": {
+        "ki": "気 KI",
+        "belt": "BELT",
+        "kimeReady": "氣 READY [SPACE]",
+        "kime": "氣 KIME",
+        "combo": "COMBO"
+    },
+    "gameOver": {
+        "title": "THE DOJO\nHAS FALLEN",
+        "currentScore": "CURRENT SCORE",
+        "personalRecord": "PERSONAL BEST",
+        "newRecord": "★ NEW RECORD ★",
+        "legacy": "Your total legacy:",
+        "legacyUnit": "accumulated training years.",
+        "restart": "TRAIN AGAIN",
+        "revive": "REVIVE (+50 HP)",
+        "loading": "LOADING..."
+    },
+    "pause": {
+        "title": "PAUSED",
+        "subtitle": "Breathe. The flow state awaits you.",
+        "resume": "CONTINUE"
+    },
+    "meditation": {
+        "kanji": "瞑想",
+        "title": "MEDITATION",
+        "volume": "MASTER VOLUME",
+        "sfx": "SOUND EFFECTS",
+        "sfxOn": "ON",
+        "sfxOff": "OFF",
+        "record": "PERSONAL BEST",
+        "trainingYears": "TRAINING YEARS",
+        "language": "LANGUAGE",
+        "back": "BACK"
+    },
+    "leaderboard": {
+        "title": "GLOBAL RANKING",
+        "all": "All",
+        "loading": "Loading...",
+        "empty": "No records yet. Be the first!",
+        "yourScore": "Your score:",
+        "namePlaceholder": "Your name",
+        "submit": "Submit",
+        "submitting": "Submitting...",
+        "profanityError": "Name not allowed. Choose another.",
+        "privacyNotice": "By submitting your score, your name and score are stored on an external server for ranking display. No additional personal data is collected."
+    },
+    "splash": {
+        "kanji": "敬",
+        "meaning": "RESPECT"
+    },
+    "perfect": "PERFECT!"
+}

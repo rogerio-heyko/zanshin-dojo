@@ -1,0 +1,69 @@
+{
+    "menu": {
+        "title": "ZANSHIN",
+        "subtitle": "O ÚLTIMO DOJO",
+        "startGame": "INICIAR TREINO",
+        "meditation": "MEDITAÇÃO",
+        "ranking": "RANKING"
+    },
+    "howToPlay": {
+        "title": "COMO JOGAR",
+        "leftDir": "← ESQUERDA",
+        "rightDir": "DIREITA →",
+        "leftAction": "Atacar pela esquerda",
+        "rightAction": "Atacar pela direita",
+        "objective": "Inimigos avançam dos dois lados. Ataque no momento certo para defender o Dojo. Timing perfeito gera combo e pontuação maior. Boa sorte!"
+    },
+    "hud": {
+        "ki": "気 KI",
+        "belt": "FAIXA",
+        "kimeReady": "氣 PRONTO [ESPAÇO]",
+        "kime": "氣 KIME",
+        "combo": "COMBO"
+    },
+    "gameOver": {
+        "title": "O DOJO\nCAIU",
+        "currentScore": "PONTUAÇÃO ATUAL",
+        "personalRecord": "RECORDE PESSOAL",
+        "newRecord": "★ NOVO RECORDE ★",
+        "legacy": "Seu legado total:",
+        "legacyUnit": "anos de treino acumulados.",
+        "restart": "TREINAR NOVAMENTE",
+        "revive": "REVIVER (+50 HP)",
+        "loading": "CARREGANDO..."
+    },
+    "pause": {
+        "title": "PAUSADO",
+        "subtitle": "Respire. O estado de fluxo o aguarda.",
+        "resume": "CONTINUAR"
+    },
+    "meditation": {
+        "kanji": "瞑想",
+        "title": "MEDITAÇÃO",
+        "volume": "VOLUME GERAL",
+        "sfx": "EFEITOS SONOROS",
+        "sfxOn": "ATIVADO",
+        "sfxOff": "DESATIVADO",
+        "record": "RECORDE PESSOAL",
+        "trainingYears": "ANOS DE TREINO",
+        "language": "IDIOMA",
+        "back": "VOLTAR"
+    },
+    "leaderboard": {
+        "title": "RANKING GLOBAL",
+        "all": "Todos",
+        "loading": "Carregando...",
+        "empty": "Sem registros ainda. Seja o primeiro!",
+        "yourScore": "Sua pontuação:",
+        "namePlaceholder": "Seu nome",
+        "submit": "Enviar",
+        "submitting": "Enviando...",
+        "profanityError": "Nome não permitido. Escolha outro.",
+        "privacyNotice": "Ao enviar sua pontuação, seu nome e score são armazenados em um servidor externo para exibição no ranking. Nenhum dado pessoal adicional é coletado."
+    },
+    "splash": {
+        "kanji": "敬",
+        "meaning": "RESPEITO"
+    },
+    "perfect": "PERFEITO!"
+}
