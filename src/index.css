@@ -382,41 +382,122 @@ body {
 
 .boss-sequence-ui {
     position: absolute;
-    bottom: clamp(-80px, -10vh, -60px);
+    bottom: clamp(-90px, -12vh, -70px);
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: clamp(8px, 2vw, 15px);
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
 
+.boss-orbs-row {
+    display: flex;
+    gap: clamp(8px, 2vw, 12px);
+}
+
+/* Orb with arrow + key hint */
 .sequence-orb {
-    width: clamp(30px, 7vw, 40px);
-    height: clamp(30px, 7vw, 40px);
+    width: clamp(34px, 7vw, 46px);
+    height: clamp(44px, 9vw, 58px);
     border-radius: 8px;
     border: 2px solid rgba(255, 255, 255, 0.4);
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
     transition: all 0.2s;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    font-size: clamp(16px, 4vw, 24px);
-    color: white;
-    font-weight: bold;
-    background: rgba(0, 0, 0, 0.5);
+    gap: 1px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
 }
 
-.sequence-orb.left  { border-color: rgba(0, 255, 255, 0.6); }
-.sequence-orb.right { border-color: rgba(255, 0, 255, 0.6); }
+.orb-arrow {
+    font-size: clamp(14px, 3.5vw, 20px);
+    line-height: 1;
+    font-weight: bold;
+    color: white;
+}
+
+.orb-key {
+    font-size: clamp(9px, 2vw, 12px);
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.05em;
+}
+
+.sequence-orb.left  { border-color: rgba(0, 255, 255, 0.7); }
+.sequence-orb.right { border-color: rgba(255, 0, 255, 0.7); }
+
 .sequence-orb.filled {
     background: white;
-    color: black;
-    box-shadow: 0 0 15px white;
     border-color: white;
+    box-shadow: 0 0 15px white;
 }
+.sequence-orb.filled .orb-arrow,
+.sequence-orb.filled .orb-key { color: #1A1A1B; }
+
 .sequence-orb.fail-orb {
     border-color: red;
     background: rgba(255, 0, 0, 0.8);
-    color: white;
+}
+
+/* ——— Dan Progress Bar (2nd Dan+ mixed mode) ——— */
+.dan-progress-container {
+    position: absolute;
+    top: clamp(70px, 14vh, 110px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: clamp(220px, 40vw, 360px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    z-index: 85;
+    pointer-events: none;
+}
+
+.dan-progress-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(0.6rem, 1.5vw, 0.75rem);
+    font-weight: bold;
+    color: #F5F5F1;
+    letter-spacing: 0.1em;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+.dan-progress-track {
+    width: 100%;
+    height: clamp(6px, 1.2vh, 10px);
+    background: rgba(255,255,255,0.1);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.dan-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #D4AF37, #B71C1C);
+    box-shadow: 0 0 8px rgba(212,175,55,0.6);
+    min-width: 2px;
+    transition: width 0.3s ease-out;
+}
+
+.dan-progress-boss-hint {
+    font-size: clamp(0.5rem, 1.2vw, 0.6rem);
+    letter-spacing: 0.12em;
+    color: rgba(212, 175, 55, 0.75);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    animation: hintPulse 2s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+    0%, 100% { opacity: 0.6; }
+    50%       { opacity: 1; }
 }
 
 .boss-chances {

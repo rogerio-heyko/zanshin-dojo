@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Build output
+dist/
+build/
+.output/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Vite
+.vite/
+
+# AI tooling (local only)
+.agent/
+.opencode/
+
+# Misc
+*.py
+*.pdf
+analysis_results_*.md
+task.md

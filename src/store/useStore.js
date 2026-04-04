@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { playImpact, playMiss, playLevelUp, playDamage, playKiai, playOss, setMasterVolume as setAudioMasterVolume, setSfxEnabled as setAudioSfxEnabled } from '../utils/audio';
+import { playImpact, playMiss, playLevelUp, playDamage, playKiai, playOss, playAplausos, setMasterVolume as setAudioMasterVolume, setSfxEnabled as setAudioSfxEnabled } from '../utils/audio';
 
 const ZONES = {
     PERFECT_MIN: 42, PERFECT_MAX: 48, // Lado Esquerdo (0 a 100)
@@ -69,6 +69,7 @@ export const useStore = create(
             bossSequence: [],
             playerSequenceIndex: 0,
             bossChances: 3,
+            danScore: 0, // points earned in current Dan phase (resets each Dan)
 
             // --- DADOS PERSISTENTES ---
             highScore: 0,
@@ -82,7 +83,8 @@ export const useStore = create(
                 gameMode: 'PLAYING',
                 score: 0, health: 100, combo: 0, kime: 0, enemies: [], comboEffects: [],
                 playerState: 'IDLE', belt: 'Branca',
-                bossState: 'IDLE', bossSequence: [], playerSequenceIndex: 0, bossChances: 3
+                bossState: 'IDLE', bossSequence: [], playerSequenceIndex: 0, bossChances: 3,
+                danScore: 0,
             }),
 
             pauseGame: () => set((state) => ({
@@ -120,27 +122,40 @@ export const useStore = create(
 
             // --- AÇÕES DO JOGO ---
             spawnEnemy: () => {
-                const { gameMode, belt, enemies } = get();
-                if (gameMode !== 'PLAYING') return; // Pause and transitions stop spawns
+                const { gameMode, belt, bossState, danScore } = get();
+                if (gameMode !== 'PLAYING') return;
 
                 const currentBeltConfig = BELT_LEVELS.find(b => b.name === belt);
                 const beltIndex = BELT_LEVELS.findIndex(b => b.name === belt);
 
-                // Boss Combo Boss Burst Mode (Index 7+ / Faixas Pretas) mudou para Simon-Says!
-                if (beltIndex >= 7) {
-                    const status = get().bossState;
-                    if (status === 'IDLE') {
-                        const minLength = 3;
-                        const maxLength = 3 + Math.floor((beltIndex - 7) / 2); // 3-4 for 1st Dan, up to ~8 elements at 10th
-                        const comboLength = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
-
-                        const newSequence = [];
-                        for (let i = 0; i < comboLength; i++) {
-                            newSequence.push(Math.random() > 0.5 ? 'left' : 'right');
-                        }
-                        // Stop normal enemies and trigger Demonstração
-                        set({ enemies: [], bossState: 'DEMONSTRATING', bossSequence: newSequence, playerSequenceIndex: 0 });
+                // 1º Dan (index 7) — pure Simon Says from the start
+                if (beltIndex === 7) {
+                    if (bossState === 'IDLE') {
+                        get()._triggerBoss(beltIndex);
                     }
+                    return;
+                }
+
+                // 2º Dan+ (index 8+) — Mixed mode: ninjas until danScore threshold
+                if (beltIndex >= 8) {
+                    const DAN_BOSS_THRESHOLD = 500;
+
+                    if (bossState !== 'IDLE') return; // Boss active, no ninja spawning
+
+                    if (danScore >= DAN_BOSS_THRESHOLD) {
+                        // Threshold reached — trigger boss transition
+                        get().enemies.forEach(releaseEnemy);
+                        set({ enemies: [], bossState: 'DEMONSTRATING' }); // trigger Boss via _triggerBoss below
+                        get()._triggerBoss(beltIndex);
+                        return;
+                    }
+
+                    // Normal ninja spawn with slight Dan speed boost
+                    const danBoost = (beltIndex - 7) * 0.04; // +0.04 per Dan above 1st
+                    const side = Math.random() > 0.5 ? 'left' : 'right';
+                    const speed = currentBeltConfig.speed + danBoost + (Math.random() * 0.05);
+                    const newEnemy = acquireEnemy(side, speed);
+                    set(state => ({ enemies: [...state.enemies, newEnemy] }));
                     return;
                 }
 
@@ -148,7 +163,26 @@ export const useStore = create(
                 const side = Math.random() > 0.5 ? 'left' : 'right';
                 const speed = currentBeltConfig.speed + (Math.random() * 0.05);
                 const newEnemy = acquireEnemy(side, speed);
-                set((state) => ({ enemies: [...state.enemies, newEnemy] }));
+                set(state => ({ enemies: [...state.enemies, newEnemy] }));
+            },
+
+            _triggerBoss: (beltIndex) => {
+                const minLength = 3;
+                const maxLength = 3 + Math.floor((beltIndex - 7) / 2);
+                const comboLength = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
+                const newSequence = Array.from({ length: comboLength }, () =>
+                    Math.random() > 0.5 ? 'left' : 'right'
+                );
+                playOss();
+                playAplausos(beltIndex);
+                set({
+                    enemies: [],
+                    bossState: 'DEMONSTRATING',
+                    bossSequence: newSequence,
+                    playerSequenceIndex: 0,
+                    bossChances: 3,
+                    danScore: 0, // reset for next Dan phase
+                });
             },
 
             updateEnemies: (deltaTime = 1/60) => {
@@ -184,11 +218,13 @@ export const useStore = create(
                     type: isPerfect ? 'perfect' : 'normal'
                 };
                 set(state => ({ comboEffects: [...state.comboEffects, newEffect] }));
+                // Timeout matches animation: 2000ms for perfect, 1400ms for normal
+                const removeDelay = isPerfect ? 2000 : 1400;
                 setTimeout(() => {
                     set(state => ({
                         comboEffects: state.comboEffects.filter(e => e.id !== id)
                     }));
-                }, 800);
+                }, removeDelay);
             },
 
             handleAttack: (side) => {
@@ -303,12 +339,18 @@ export const useStore = create(
                     // before the filter closure runs, overwriting the id (race condition)
                     const killedId = closest.id;
                     releaseEnemy(closest);
+
+                    // Accumulate danScore for 2nd Dan+ mixed mode
+                    const currentBeltIdx = BELT_LEVELS.findIndex(b => b.name === nextBelt);
+                    const danScoreDelta = currentBeltIdx >= 8 ? points : 0;
+
                     set(state => ({
                         enemies: state.enemies.filter(e => e.id !== killedId),
                         score: newScore,
                         combo: newCombo,
                         kime: Math.min(100, state.kime + (isPerfect ? 15 : 5)),
                         belt: nextBelt,
+                        danScore: futureBelt !== belt ? 0 : state.danScore + danScoreDelta,
                         playerState: side === 'left' ? 'ATTACK_L_PERFECT' : 'ATTACK_R_PERFECT'
                     }));
 
